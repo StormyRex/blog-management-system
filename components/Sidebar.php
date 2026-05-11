@@ -1,0 +1,3 @@
+<?php
+// Sidebar component placeholder
+

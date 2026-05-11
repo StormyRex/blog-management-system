@@ -1,0 +1,3 @@
+<?php
+// Auth layout placeholder
+

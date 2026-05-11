@@ -1,0 +1,3 @@
+<?php
+// Navbar component placeholder
+
