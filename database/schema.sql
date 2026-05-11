@@ -1,0 +1,34 @@
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+    avatar TEXT NULL,
+
+    name VARCHAR(100) NOT NULL,
+
+    username VARCHAR(30) NOT NULL UNIQUE,
+
+    email VARCHAR(100) NOT NULL UNIQUE,
+
+    phone VARCHAR(20) NULL,
+
+    gender ENUM('Male','Female','Other') NULL,
+
+    birth_date DATE NULL,
+
+    bio TEXT NULL,
+
+    city VARCHAR(100) NULL,
+
+    password VARCHAR(255) NOT NULL,
+
+    role ENUM('USER','ADMIN') DEFAULT 'USER',
+
+    status ENUM('ACTIVE','BLOCKED','DEACTIVATED') DEFAULT 'ACTIVE',
+
+    is_email_verified BOOLEAN DEFAULT FALSE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+);
