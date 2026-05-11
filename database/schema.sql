@@ -187,3 +187,81 @@ CREATE TABLE otp_verifications (
     ON DELETE CASCADE
 
 );
+
+CREATE TABLE permissions (
+
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+    name VARCHAR(100) NOT NULL,
+
+    code VARCHAR(100) NOT NULL UNIQUE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+
+);
+
+CREATE TABLE user_permissions (
+
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+    user_id BIGINT NOT NULL,
+
+    permission_id BIGINT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_user_permission_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT fk_user_permission_permission
+    FOREIGN KEY (permission_id)
+    REFERENCES permissions(id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT unique_user_permission
+    UNIQUE(user_id, permission_id)
+
+);
+
+CREATE TABLE contact_messages (
+
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+    name VARCHAR(100) NOT NULL,
+
+    email VARCHAR(100) NOT NULL,
+
+    subject VARCHAR(255) NULL,
+
+    message TEXT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+);
+
+CREATE TABLE blog_histories (
+
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+
+    user_id BIGINT NOT NULL,
+
+    blog_id BIGINT NOT NULL,
+
+    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_blog_history_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT fk_blog_history_blog
+    FOREIGN KEY (blog_id)
+    REFERENCES blogs(id)
+    ON DELETE CASCADE
+
+);
