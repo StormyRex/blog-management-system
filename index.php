@@ -13,22 +13,25 @@ if ($url === '//') {
 }
 
 $routeTarget = $routes[$url] ?? null;
-$routePath = null;
 
-if ($routeTarget) {
-    // Resolve route target path safely from the project root.
-    $routePath = __DIR__ . '/' . ltrim($routeTarget, '/');
+if (is_array($routeTarget) && count($routeTarget) === 2) {
+    [$controllerClass, $method] = $routeTarget;
+
+    if (class_exists($controllerClass)) {
+        $controller = new $controllerClass();
+
+        if (method_exists($controller, $method)) {
+            $controller->$method();
+            return;
+        }
+    }
 }
 
-if ($routeTarget && file_exists($routePath)) {
-    require $routePath;
-} else {
-    $errorPath = __DIR__ . '/pages/errors/404.php';
-    http_response_code(404);
+$errorPath = __DIR__ . '/pages/errors/404.php';
+http_response_code(404);
 
-    if (file_exists($errorPath)) {
-        require $errorPath;
-    } else {
-        echo '404 Not Found';
-    }
+if (is_file($errorPath)) {
+    require $errorPath;
+} else {
+    echo '404 Not Found';
 }

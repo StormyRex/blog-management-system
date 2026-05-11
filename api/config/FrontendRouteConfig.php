@@ -1,21 +1,27 @@
 <?php
 
+use Shive\BlogManagementSystem\Controllers\AdminController;
+use Shive\BlogManagementSystem\Controllers\AuthController;
+use Shive\BlogManagementSystem\Controllers\BlogController;
+use Shive\BlogManagementSystem\Controllers\HomeController;
+use Shive\BlogManagementSystem\Controllers\UserController;
+
 return [
 
-    '/' => 'pages/home.php',
+    '/' => [HomeController::class, 'index'],
 
-    '/login' => 'pages/auth/login.php',
+    '/login' => [AuthController::class, 'login'],
 
-    '/register' => 'pages/auth/register.php',
+    '/register' => [AuthController::class, 'register'],
 
-    '/user/dashboard' => 'pages/user/dashboard.php',
+    '/user/dashboard' => [UserController::class, 'dashboard'],
 
-    '/user/profile' => 'pages/user/profile.php',
+    '/user/profile' => [UserController::class, 'profile'],
 
-    '/blogs/my-blogs' => 'pages/blogs/my-blogs.php',
+    '/blogs/my-blogs' => [BlogController::class, 'myBlogs'],
 
-    '/blogs/create' => 'pages/blogs/create.php',
+    '/blogs/create' => [BlogController::class, 'create'],
 
-    '/admin/dashboard' => 'pages/admin/dashboard.php',
+    '/admin/dashboard' => [AdminController::class, 'dashboard'],
 
 ];
