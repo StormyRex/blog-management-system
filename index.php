@@ -2,7 +2,16 @@
 
 require 'vendor/autoload.php';
 
-$routes = require 'api/Config/FrontendRouteConfig.php';
+$frontendRoutes =
+    require 'api/Config/FrontendRouteConfig.php';
+
+$apiRoutes =
+    require 'api/Routes/ApiRouteConfig.php';
+
+$routes = array_merge(
+    $frontendRoutes,
+    $apiRoutes
+);
 
 $url = $_GET['url'] ?? '/';
 
