@@ -1,216 +1,181 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
+    <title>Uploads Listing</title>
 
-    <title>Upload</title>
+    <meta charset="UTF-8">
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css"
+    >
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 </head>
 
 <body>
 
-    <form id="uploadForm">
+    <h2>Uploads Listing</h2>
 
-        <input
-            type="file"
-            name="image"
-            required
-        >
+    <table
+        id="uploadsTable"
+        class="display"
+        style="width:100%"
+    >
 
-        <button type="submit">
-            Upload
-        </button>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Public ID</th>
+                <th>Filename</th>
+                <th>Action</th>
+            </tr>
+        </thead>
 
-    </form>
+        <tbody>
 
-    <br>
+        </tbody>
 
-    <div id="result"></div>
-
-    <div id="uploads"></div>
+    </table>
 
     <script>
 
-        function renderUploads(uploads) {
+        let uploadsTable;
 
-            $('#uploads').empty();
-
-            if (!Array.isArray(uploads) || uploads.length === 0) {
-                $('#uploads').html(
-                    '<p>No uploads found.</p>'
-                );
-                return;
-            }
-
-            const html = uploads.map(function (upload) {
-                const filename = upload.filename || '';
-                const publicId = upload.public_id || '';
-                const url = upload.url || '';
-
-                return `
-                    <div class="upload-card" data-id="${upload.id}">
-                        <img
-                            src="${url}"
-                            width="200"
-                        >
-                        <p>Filename: ${filename}</p>
-                        <p>Public ID: ${publicId}</p>
-                        <button
-                            class="delete-upload"
-                            data-id="${upload.id}"
-                        >
-                            Delete
-                        </button>
-                    </div>
-                `;
-            }).join('');
-
-            $('#uploads').html(html);
-        }
-
-        function loadUploads() {
+        function loadUploads()
+        {
             $.ajax({
 
                 url: '/blog-management-system/api/uploads',
 
                 type: 'GET',
 
-                success: function (response) {
+                success: function(response)
+                {
+                    if (!response.success) {
 
-                    if (response && response.success) {
-                        renderUploads(
-                            response.data?.uploads
-                        );
+                        alert(response.message);
+
                         return;
                     }
 
-                    $('#uploads').html(
-                        '<p>Failed to load uploads.</p>'
-                    );
+                    if ($.fn.DataTable.isDataTable('#uploadsTable')) {
+
+                        uploadsTable.destroy();
+                    }
+
+                    let rows = '';
+
+                    response.data.uploads.forEach(function(upload) {
+
+                        rows += `
+                            <tr id="upload-row-${upload.id}">
+
+                                <td>
+                                    ${upload.id}
+                                </td>
+
+                                <td>
+                                    <img
+                                        src="${upload.url}"
+                                        width="120"
+                                        style="border-radius:8px"
+                                    >
+                                </td>
+
+                                <td>
+                                    ${upload.public_id}
+                                </td>
+
+                                <td>
+                                    ${upload.filename}
+                                </td>
+
+                                <td>
+                                    <button
+                                        class="delete-upload"
+                                        data-id="${upload.id}"
+                                        style="
+                                            background:red;
+                                            color:white;
+                                            border:none;
+                                            padding:8px 12px;
+                                            cursor:pointer;
+                                            border-radius:5px;
+                                        "
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
+
+                            </tr>
+                        `;
+                    });
+
+                    $('#uploadsTable tbody').html(rows);
+
+                    uploadsTable = $('#uploadsTable').DataTable();
                 },
 
-                error: function (xhr) {
-
+                error: function(xhr)
+                {
                     console.log(xhr.responseText);
-                    $('#uploads').html(
-                        '<p>Failed to load uploads.</p>'
-                    );
                 }
-
             });
         }
 
-        $('#uploadForm').submit(function (e) {
-
-            e.preventDefault();
-
-            let formData = new FormData(this);
-
-            $.ajax({
-
-                url: '/blog-management-system/api/upload',
-
-                type: 'POST',
-
-                data: formData,
-
-                processData: false,
-
-                contentType: false,
-
-                success: function (response) {
-
-                    console.log(response);
-
-                    if (!response || !response.data) {
-                        $('#result').html(
-                            `<p>${response?.message || 'Upload failed'}</p>`
-                        );
-                        return;
-                    }
-
-                    const message = response.message || 'Upload complete';
-                    const dbError = response.data?.db_error
-                        ? `<p>${response.data.db_error}</p>`
-                        : '';
-
-                    $('#result').html(
-
-                        `
-                        <p>${message}</p>
-                        ${dbError}
-                        `
-                    );
-
-                    loadUploads();
-                },
-
-                error: function (xhr) {
-
-                    console.log(xhr.responseText);
-                }
-
-            });
-
-        });
+        loadUploads();
 
         $(document).on(
             'click',
             '.delete-upload',
-            function () {
+            function()
+        {
+            const uploadId = $(this).data('id');
 
-                const id = $(this).data('id');
+            if (!confirm('Are you sure you want to delete this upload?')) {
+                return;
+            }
 
-                if (!id) {
-                    return;
-                }
+            $.ajax({
 
-                if (!confirm('Delete this upload?')) {
-                    return;
-                }
+                url: '/blog-management-system/api/upload/delete',
 
-                const button = $(this);
+                type: 'POST',
 
-                $.ajax({
+                data: {
+                    id: uploadId
+                },
 
-                    url: '/blog-management-system/api/upload/delete',
+                success: function(response)
+                {
+                    if (!response.success) {
 
-                    type: 'POST',
+                        alert(response.message);
 
-                    data: {
-                        id: id
-                    },
-
-                    success: function (response) {
-
-                        if (response && response.success) {
-                            button
-                                .closest('.upload-card')
-                                .remove();
-                            return;
-                        }
-
-                        alert(
-                            response?.message
-                            || 'Something went wrong'
-                        );
-                    },
-
-                    error: function (xhr) {
-
-                        console.log(xhr.responseText);
-                        alert('Something went wrong');
+                        return;
                     }
 
-                });
+                    alert(response.message);
 
-            }
-        );
+                    uploadsTable
+                        .row(
+                            $(`#upload-row-${uploadId}`)
+                        )
+                        .remove()
+                        .draw();
+                },
 
-        loadUploads();
+                error: function(xhr)
+                {
+                    console.log(xhr.responseText);
+                }
+            });
+        });
 
     </script>
 
