@@ -2,6 +2,8 @@
 
 namespace Shive\BlogManagementSystem\Controllers;
 
+use Shive\BlogManagementSystem\Helpers\ResponseHelper;
+use Shive\BlogManagementSystem\Helpers\ValidationHelper;
 use Shive\BlogManagementSystem\Providers\CloudinaryProvider;
 use Shive\BlogManagementSystem\Models\UploadModel;
 
@@ -9,24 +11,48 @@ class UploadController
 {
     public function upload()
     {
-        header('Content-Type: application/json; charset=utf-8');
-
         try {
 
-            if (!isset($_FILES['image'])) {
+            $file = $_FILES['image'] ?? null;
 
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'No file uploaded'
-                ]);
+            if (!ValidationHelper::required($file)) {
+                ResponseHelper::error(
+                    'Image is required',
+                    200
+                );
+            }
 
-                return;
+            if (!ValidationHelper::image($file)) {
+                ResponseHelper::error(
+                    'Invalid image type',
+                    200
+                );
+            }
+
+            if (!ValidationHelper::maxFileSize(
+                $file,
+                5 * 1024 * 1024
+            )) {
+                ResponseHelper::error(
+                    'Image exceeds 5MB size limit',
+                    200
+                );
+            }
+
+            if (!ValidationHelper::allowedExtensions(
+                $file,
+                ['jpg', 'jpeg', 'png', 'webp']
+            )) {
+                ResponseHelper::error(
+                    'Invalid file extension',
+                    200
+                );
             }
 
             $provider = new CloudinaryProvider();
 
             $result = $provider->upload(
-                $_FILES['image']['tmp_name']
+                $file['tmp_name']
             );
 
             $model = new UploadModel();
@@ -53,73 +79,65 @@ class UploadController
                 $dbError = $e->getMessage();
             }
 
-            $response = [
-                'success' => $dbError === null,
-                'message' => $dbError === null
-                    ? 'Upload successful'
-                    : 'Upload succeeded but database insert failed',
+            $data = [
+                'public_id' =>
+                    $result['public_id'],
 
-                'data' => [
-                    'public_id' =>
-                        $result['public_id'],
+                'secure_url' =>
+                    $result['secure_url'],
 
-                    'secure_url' =>
-                        $result['secure_url'],
-
-                    'original_filename' =>
-                        $result['original_filename']
-                ]
+                'original_filename' =>
+                    $result['original_filename']
             ];
 
             if ($dbError !== null) {
-                // Temporary debugging output for database failures.
-                $response['db_error'] = $dbError;
+                $data['db_error'] = $dbError;
+
+                ResponseHelper::error(
+                    'Upload succeeded but database insert failed',
+                    200,
+                    $data
+                );
             }
 
-            echo json_encode($response);
+            ResponseHelper::success(
+                'Upload successful',
+                $data
+            );
 
         } catch (\Throwable $e) {
-
-            echo json_encode([
-                'success' => false,
-                'message' => $e->getMessage()
-            ]);
+            ResponseHelper::error(
+                $e->getMessage(),
+                200
+            );
         }
     }
 
     public function fetch(): void
     {
-        header(
-            'Content-Type: application/json'
-        );
-
         $model = new UploadModel();
 
         $uploads =
             $model->getAll();
 
-        echo json_encode([
-            'success' => true,
-            'uploads' => $uploads
-        ]);
+        ResponseHelper::success(
+            'Uploads fetched',
+            ['uploads' => $uploads]
+        );
     }
 
     public function delete(): void
     {
-        header('Content-Type: application/json');
-
         try {
             $id = isset($_POST['id'])
                 ? (int) $_POST['id']
                 : 0;
 
             if ($id <= 0) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Something went wrong'
-                ]);
-
-                return;
+                ResponseHelper::error(
+                    'Something went wrong',
+                    200
+                );
             }
 
             $model = new UploadModel();
@@ -127,12 +145,10 @@ class UploadController
             $upload = $model->findById($id);
 
             if (!$upload || empty($upload['public_id'])) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Something went wrong'
-                ]);
-
-                return;
+                ResponseHelper::error(
+                    'Something went wrong',
+                    200
+                );
             }
 
             $provider = new CloudinaryProvider();
@@ -142,12 +158,10 @@ class UploadController
             );
 
             if ($deleteResult === false) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Something went wrong'
-                ]);
-
-                return;
+                ResponseHelper::error(
+                    'Something went wrong',
+                    200
+                );
             }
 
             if (
@@ -156,32 +170,27 @@ class UploadController
                 && $deleteResult['result'] !== 'ok'
                 && $deleteResult['result'] !== 'not found'
             ) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Something went wrong'
-                ]);
-
-                return;
+                ResponseHelper::error(
+                    'Something went wrong',
+                    200
+                );
             }
 
             if (!$model->delete($id)) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Something went wrong'
-                ]);
-
-                return;
+                ResponseHelper::error(
+                    'Something went wrong',
+                    200
+                );
             }
 
-            echo json_encode([
-                'success' => true,
-                'message' => 'Upload deleted successfully'
-            ]);
+            ResponseHelper::success(
+                'Upload deleted successfully'
+            );
         } catch (\Throwable $exception) {
-            echo json_encode([
-                'success' => false,
-                'message' => $exception->getMessage()
-            ]);
+            ResponseHelper::error(
+                $exception->getMessage(),
+                200
+            );
         }
     }
 }

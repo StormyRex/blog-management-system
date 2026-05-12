@@ -81,7 +81,9 @@
                 success: function (response) {
 
                     if (response && response.success) {
-                        renderUploads(response.uploads);
+                        renderUploads(
+                            response.data?.uploads
+                        );
                         return;
                     }
 
@@ -131,8 +133,8 @@
                     }
 
                     const message = response.message || 'Upload complete';
-                    const dbError = response.db_error
-                        ? `<p>${response.db_error}</p>`
+                    const dbError = response.data?.db_error
+                        ? `<p>${response.data.db_error}</p>`
                         : '';
 
                     $('#result').html(
