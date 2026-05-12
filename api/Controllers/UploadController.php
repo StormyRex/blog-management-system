@@ -13,46 +13,107 @@ class UploadController
     {
         try {
 
-            $file = $_FILES['image'] ?? null;
+            $file = $_FILES['image']
+                ?? $_FILES['video']
+                ?? null;
 
             if (!ValidationHelper::required($file)) {
                 ResponseHelper::error(
-                    'Image is required',
+                    'Image or video is required',
                     200
                 );
             }
 
-            if (!ValidationHelper::image($file)) {
+            if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
                 ResponseHelper::error(
-                    'Invalid image type',
+                    'Upload failed',
                     200
                 );
             }
 
-            if (!ValidationHelper::maxFileSize(
-                $file,
-                5 * 1024 * 1024
-            )) {
+            $mimeType = mime_content_type(
+                $file['tmp_name']
+            );
+
+            if (is_string($mimeType)
+                && strpos($mimeType, 'image/') === 0
+            ) {
+                $uploadType = 'IMAGE';
+            } elseif (is_string($mimeType)
+                && strpos($mimeType, 'video/') === 0
+            ) {
+                $uploadType = 'VIDEO';
+            } else {
                 ResponseHelper::error(
-                    'Image exceeds 5MB size limit',
+                    'Unsupported file type',
                     200
                 );
             }
 
-            if (!ValidationHelper::allowedExtensions(
-                $file,
-                ['jpg', 'jpeg', 'png', 'webp']
-            )) {
-                ResponseHelper::error(
-                    'Invalid file extension',
-                    200
-                );
+            if ($uploadType === 'IMAGE') {
+                if (!ValidationHelper::image($file)) {
+                    ResponseHelper::error(
+                        'Invalid image type',
+                        200
+                    );
+                }
+
+                if (!ValidationHelper::maxFileSize(
+                    $file,
+                    20 * 1024 * 1024
+                )) {
+                    ResponseHelper::error(
+                        'Image exceeds 20MB size limit',
+                        200
+                    );
+                }
+
+                if (!ValidationHelper::allowedExtensions(
+                    $file,
+                    ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tif', 'tiff']
+                )) {
+                    ResponseHelper::error(
+                        'Invalid file extension',
+                        200
+                    );
+                }
+            }
+
+            if ($uploadType === 'VIDEO') {
+                if (!ValidationHelper::video($file)) {
+                    ResponseHelper::error(
+                        'Invalid video type',
+                        200
+                    );
+                }
+
+                if (!ValidationHelper::maxFileSize(
+                    $file,
+                    50 * 1024 * 1024
+                )) {
+                    ResponseHelper::error(
+                        'Video exceeds 50MB size limit',
+                        200
+                    );
+                }
+
+                if (!ValidationHelper::allowedVideoExtensions(
+                    $file,
+                    ['mp4', 'mov', 'webm']
+                )) {
+                    ResponseHelper::error(
+                        'Invalid video extension',
+                        200
+                    );
+                }
             }
 
             $provider = new CloudinaryProvider();
 
             $result = $provider->upload(
-                $file['tmp_name']
+                $file['tmp_name'],
+                'blog-management-system',
+                ['resource_type' => 'auto']
             );
 
             $model = new UploadModel();
@@ -63,7 +124,7 @@ class UploadController
 
                     'blog_id' => 1,
 
-                    'type' => 'IMAGE',
+                    'type' => $uploadType,
 
                     'url' => $result['secure_url'],
 

@@ -75,4 +75,58 @@ class ValidationHelper
             true
         );
     }
+
+    public static function video(array $file): bool
+    {
+        if (!isset($file['tmp_name'])) {
+            return false;
+        }
+
+        if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            return false;
+        }
+
+        $mimeType = mime_content_type(
+            $file['tmp_name']
+        );
+
+        $allowedMimes = [
+            'video/mp4',
+            'video/quicktime',
+            'video/webm'
+        ];
+
+        return in_array(
+            $mimeType,
+            $allowedMimes,
+            true
+        );
+    }
+
+    public static function allowedVideoExtensions(
+        array $file,
+        array $allowed
+    ): bool {
+
+        if (!isset($file['name'])) {
+            return false;
+        }
+
+        if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            return false;
+        }
+
+        $extension = strtolower(
+            pathinfo(
+                $file['name'],
+                PATHINFO_EXTENSION
+            )
+        );
+
+        return in_array(
+            $extension,
+            $allowed,
+            true
+        );
+    }
 }

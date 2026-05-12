@@ -36,16 +36,20 @@ class CloudinaryProvider
 
     public function upload(
         string $filePath,
-        string $folder = 'blog-management-system'
+        string $folder = 'blog-management-system',
+        array $options = []
     ) {
+
+        $uploadOptions = array_merge(
+            ['folder' => $folder],
+            $options
+        );
 
         $result = $this->cloudinary
             ->uploadApi()
             ->upload(
                 $filePath,
-                [
-                    'folder' => $folder
-                ]
+                $uploadOptions
             );
 
         return $result;
