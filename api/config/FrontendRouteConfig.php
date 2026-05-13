@@ -11,6 +11,12 @@ return [
 
     '/' => [HomeController::class, 'index'],
 
+    '/explore' => [HomeController::class, 'explore'],
+
+    '/contact-us' => [HomeController::class, 'contact'],
+
+
+
     '/login' => [AuthController::class, 'login'],
 
     '/register' => [AuthController::class, 'register'],
@@ -27,4 +33,5 @@ return [
 
     '/upload' => [UploadPageController::class, 'index'],
 
+    '/logout' => [AuthController::class, 'logout'],
 ];

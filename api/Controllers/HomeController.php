@@ -8,4 +8,14 @@ class HomeController extends BaseController
     {
         $this->view('home');
     }
+
+    public function explore(): void
+    {
+        $this->view('explore');
+    }
+
+    public function contact(): void
+    {
+        $this->view('contact');
+    }
 }

@@ -2,11 +2,16 @@
 
 use Shive\BlogManagementSystem\Controllers\UploadController;
 
+$baseEndpoint = '/api';
+$authBaseEndpoint = $baseEndpoint . '/auth';
 return [
 
-    '/api/upload' => [
+    $baseEndpoint.'/upload' => [
         UploadController::class,
         'upload'
-    ]
+    ],
+    $authBaseEndpoint.'/login' => "../controllers/AuthController.php",
+    $authBaseEndpoint.'/register' => "../controllers/AuthController.php",
+    $authBaseEndpoint.'/logout' => "../controllers/AuthController.php",
 
 ];  

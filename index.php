@@ -2,16 +2,68 @@
 
 require 'vendor/autoload.php';
 
-$frontendRoutes =
-    require 'api/Config/FrontendRouteConfig.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-$apiRoutes =
-    require 'api/Routes/ApiRouteConfig.php';
+if (!defined('BASE_URL')) {
+    define('BASE_URL', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'));
+}
 
-$routes = array_merge(
-    $frontendRoutes,
-    $apiRoutes
-);
+$frontendRoutes = [
+    '/' => [
+        \Shive\BlogManagementSystem\Controllers\HomeController::class,
+        'index'
+    ],
+    '/explore' => [
+        \Shive\BlogManagementSystem\Controllers\HomeController::class,
+        'explore'
+    ],
+    '/contact-us' => [
+        \Shive\BlogManagementSystem\Controllers\HomeController::class,
+        'contact'
+    ],
+    '/login' => [
+        \Shive\BlogManagementSystem\Controllers\AuthController::class,
+        'login'
+    ],
+    '/register' => [
+        \Shive\BlogManagementSystem\Controllers\AuthController::class,
+        'register'
+    ],
+    '/logout' => [
+        \Shive\BlogManagementSystem\Controllers\AuthController::class,
+        'logout'
+    ],
+    '/user/profile' => [
+        \Shive\BlogManagementSystem\Controllers\UserController::class,
+        'profile'
+    ],
+    '/user/dashboard' => [
+        \Shive\BlogManagementSystem\Controllers\UserController::class,
+        'dashboard'
+    ],
+    '/blogs/my-blogs' => [
+        \Shive\BlogManagementSystem\Controllers\BlogController::class,
+        'myBlogs'
+    ],
+    '/blogs/create' => [
+        \Shive\BlogManagementSystem\Controllers\BlogController::class,
+        'create'
+    ],
+    '/admin/dashboard' => [
+        \Shive\BlogManagementSystem\Controllers\AdminController::class,
+        'dashboard'
+    ],
+    '/upload' => [
+        \Shive\BlogManagementSystem\Controllers\UploadPageController::class,
+        'index'
+    ]
+];
+
+$apiRoutes = require 'api/Routes/ApiRouteConfig.php';
+
+$routes = array_merge($frontendRoutes, $apiRoutes);
 
 $url = $_GET['url'] ?? '/';
 
