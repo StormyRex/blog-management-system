@@ -262,22 +262,18 @@ $content = ob_get_clean();
 
 $baseUrlJs = json_encode($baseUrl);
 
-$pageScripts = ($pageScripts ?? '') . <<<'SCRIPT'
+$pageScripts = ($pageScripts ?? '') . '
 <script>
+    var baseUrl = ' . $baseUrlJs . ';
+';
 
+$pageScripts = ($pageScripts ?? '') . <<<'SCRIPT'
 $(document).ready(function () {
-
     var isLoggedIn = $('body').attr('data-is-logged-in') === '1';
-    var baseUrl    =
-SCRIPT
-. $baseUrlJs .
-<<<'SCRIPT'
-;
 
     var initialHtml = $('#exploreResults').html();
     var timer       = null;
 
-    // ── Clear form on empty submit ───────────────────────────────────────
     $('#exploreSearch').closest('form').on('submit', function (e) {
         if ($('#exploreSearch').val().trim().length === 0) {
             e.preventDefault();
@@ -285,11 +281,8 @@ SCRIPT
         }
     });
 
-    // ── Live search as user types ────────────────────────────────────────
     $('#exploreSearch').on('keyup', function () {
-
         var q = $(this).val().trim();
-
         clearTimeout(timer);
 
         if (q.length === 0) {
@@ -298,39 +291,32 @@ SCRIPT
         }
 
         timer = setTimeout(function () {
-
             $.get(baseUrl + '/api/search', { q: q }, function (res) {
-
-                if (!res || !res.success) { return; }
-
-                renderResults(res.data || { blogs: [], users: [] });
-
+                if (res && res.success) {
+                    renderResults(res.data || { blogs: [], users: [] });
+                }
             }, 'json');
-
         }, 300);
-
     });
 
-    // ── Comment count callback (from Comment.php modal) ─────────────────
     window.updateBlogCommentCount = function (blogId, count) {
         $('#cmt-' + blogId).text(parseInt(count, 10) || 0);
     };
 
-    // ── Action buttons (like / comment / share) ──────────────────────────
     $(document).on('click', '[data-action]', function () {
-
         var $btn   = $(this);
         var action = $btn.data('action');
         var blogId = $btn.data('blog-id');
         var title  = $btn.data('title') || '';
 
         if ($btn.data('requires-login') && !isLoggedIn) {
-            window.BlogSphere && window.BlogSphere.showGuestModal();
+            if (window.BlogSphere && window.BlogSphere.showGuestModal) {
+                window.BlogSphere.showGuestModal();
+            }
             return;
         }
 
         if (action === 'like') {
-
             var liked    = $btn.data('liked') == '1';
             var newLiked = !liked;
             var count    = parseInt($btn.data('like-count'), 10) || 0;
@@ -341,7 +327,7 @@ SCRIPT
             $btn.find('.like-count').text(newCount);
             $btn.data({ liked: newLiked ? '1' : '0', 'like-count': newCount });
 
-            $.post(baseUrl + '/api/blogs/like', { blog_id: blogId });
+            $.post(baseUrl + '/api/blogs/like', { blogId: blogId });
         }
 
         if (action === 'comment') {
@@ -351,14 +337,13 @@ SCRIPT
         }
 
         if (action === 'share') {
-
             var shareUrl = $btn.data('share-url');
             var sc       = parseInt($btn.data('share-count'), 10) || 0;
 
             $btn.find('.share-count').text(sc + 1);
             $btn.data('share-count', sc + 1);
 
-            $.post(baseUrl + '/api/blogs/share', { blog_id: blogId });
+            $.post(baseUrl + '/api/blogs/share', { blogId: blogId });
 
             if (navigator.share) {
                 navigator.share({ title: title, url: shareUrl }).catch(function () {});
@@ -372,7 +357,6 @@ SCRIPT
         }
     });
 
-    // ── Render AJAX search results ───────────────────────────────────────
     function escapeHtml(val) {
         return String(val || '')
             .replace(/&/g, '&amp;')
@@ -383,7 +367,6 @@ SCRIPT
     }
 
     function renderResults(data) {
-
         var blogs = data.blogs || [];
         var users = data.users || [];
 
@@ -399,11 +382,9 @@ SCRIPT
         var html = '<div class="row g-4">';
 
         blogs.forEach(function (blog) {
-
             var blogId  = parseInt(blog.id, 10) || 0;
             var thumb   = blog.thumbnail && blog.thumbnail.url ? escapeHtml(blog.thumbnail.url) : '';
             var ttype   = blog.thumbnail && blog.thumbnail.type ? blog.thumbnail.type : '';
-
             var mediaHtml = '<div class="no-media"><i class="bi bi-image"></i></div>';
 
             if (thumb) {
@@ -412,10 +393,10 @@ SCRIPT
                     : '<img src="' + thumb + '" alt="' + escapeHtml(blog.title) + '" style="width:100%;height:100%;object-fit:cover;">';
             }
 
-            var likeCount  = parseInt(blog.like_count    || 0, 10);
-            var isLiked    = parseInt(blog.is_liked       || 0, 10) > 0;
-            var shareCount = parseInt(blog.share_count    || 0, 10);
-            var cmtCount   = parseInt(blog.comment_count  || 0, 10);
+            var likeCount  = parseInt(blog.like_count || 0, 10);
+            var isLiked    = parseInt(blog.is_liked || 0, 10) > 0;
+            var shareCount = parseInt(blog.share_count || 0, 10);
+            var cmtCount   = parseInt(blog.comment_count || 0, 10);
             var likedClass = isLiked ? 'liked' : '';
             var heartIcon  = isLiked ? 'bi-heart-fill' : 'bi-heart';
 
@@ -429,11 +410,9 @@ SCRIPT
             html +=
                 '<div class="col-md-6 col-lg-4">' +
                 '<div class="blog-card h-100 d-flex flex-column">' +
-
                 '<a href="' + baseUrl + '/blogs/details?id=' + blogId + '" class="blog-card-thumb" style="text-decoration:none;">' +
                     mediaHtml +
                 '</a>' +
-
                 '<div class="p-3 pb-2 flex-grow-1 d-flex flex-column">' +
                     '<div class="d-flex align-items-center justify-content-between mb-2">' +
                         '<span class="blog-badge">' + safeCategory + '</span>' +
@@ -444,7 +423,6 @@ SCRIPT
                     (safeTags ? '<div class="mb-2" style="font-size:.75rem;color:#999;">' + safeTags + '</div>' : '') +
                     '<div style="font-size:.76rem;color:#999;"><i class="bi bi-person"></i> ' + safeName + '</div>' +
                 '</div>' +
-
                 '<div class="px-3 py-2 d-flex flex-wrap gap-2" style="border-top:1px solid #f0f0f0;">' +
                     '<button class="action-btn ' + likedClass + '" data-action="like" data-requires-login="1" data-blog-id="' + blogId + '" data-like-count="' + likeCount + '" data-liked="' + (isLiked ? '1' : '0') + '" data-title="' + safeTitle + '">' +
                         '<i class="bi ' + heartIcon + '"></i> <span class="like-count">' + likeCount + '</span>' +
@@ -457,14 +435,11 @@ SCRIPT
                     '</button>' +
                     '<a href="' + baseUrl + '/blogs/details?id=' + blogId + '" class="action-btn view ms-auto">Read <i class="bi bi-arrow-right"></i></a>' +
                 '</div>' +
-
                 '</div></div>';
         });
 
         users.forEach(function (user) {
-
             var userId = parseInt(user.id, 10) || 0;
-
             html +=
                 '<div class="col-md-6 col-lg-4">' +
                 '<div class="blog-card h-100">' +
@@ -479,12 +454,9 @@ SCRIPT
         });
 
         html += '</div>';
-
         $('#exploreResults').html(html);
     }
-
 });
-
 </script>
 SCRIPT;
 

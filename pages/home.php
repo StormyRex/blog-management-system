@@ -296,7 +296,7 @@ SCRIPT
             $btn.find('.like-count').text(newCount);
             $btn.data({ liked: newLiked ? '1' : '0', 'like-count': newCount });
 
-            $.post(baseUrl + '/api/blogs/like', { blog_id: blogId });
+            $.post(baseUrl + '/api/blogs/like', { blogId: blogId });
         }
 
         if (action === 'comment') {
@@ -313,7 +313,7 @@ SCRIPT
             $btn.find('.share-count').text(sc + 1);
             $btn.data('share-count', sc + 1);
 
-            $.post(baseUrl + '/api/blogs/share', { blog_id: blogId });
+            $.post(baseUrl + '/api/blogs/share', { blogId: blogId });
 
             if (navigator.share) {
                 navigator.share({ title: title, url: shareUrl }).catch(function () {});

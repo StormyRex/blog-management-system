@@ -134,12 +134,29 @@ ob_start();
                             Category
                         </label>
 
-                        <input
-                            type="text"
-                            class="form-control"
+                        <select
+                            class="form-select"
                             name="category"
-                            value="<?php echo htmlspecialchars($blog['category']); ?>"
                         >
+                            <option value="">
+                                Select Category
+                            </option>
+                            <option value="Programming" <?php echo $blog['category'] === 'Programming' ? 'selected' : ''; ?>>
+                                Programming
+                            </option>
+                            <option value="Technology" <?php echo $blog['category'] === 'Technology' ? 'selected' : ''; ?>>
+                                Technology
+                            </option>
+                            <option value="Travel" <?php echo $blog['category'] === 'Travel' ? 'selected' : ''; ?>>
+                                Travel
+                            </option>
+                            <option value="Fitness" <?php echo $blog['category'] === 'Fitness' ? 'selected' : ''; ?>>
+                                Fitness
+                            </option>
+                            <option value="Finance" <?php echo $blog['category'] === 'Finance' ? 'selected' : ''; ?>>
+                                Finance
+                            </option>
+                        </select>
 
                     </div>
 
@@ -266,98 +283,51 @@ ob_start();
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <script>
-
 $(document).ready(function () {
-
     $('#editBlogForm').on('submit', function (e) {
-
         e.preventDefault();
-
         $('.form-control').removeClass('is-invalid');
-
         $('.invalid-feedback').remove();
 
-        let form = $(this);
+        const form = $(this);
 
         $.ajax({
-
             url: '<?php echo $baseUrl; ?>/api/blogs/update',
-
             type: 'POST',
-
             data: form.serialize(),
-
             dataType: 'json',
-
             success: function (response) {
-
                 if (response.success) {
-
-                    window.location.href =
-                        response.redirect;
-
+                    window.location.href = response.redirect;
                 }
-
             },
-
             error: function (xhr) {
-
-                let response = xhr.responseJSON;
-
-                let hasFieldErrors =
-                    response &&
-                    response.errors &&
-                    Object.keys(response.errors).length > 0;
+                const response = xhr.responseJSON;
+                const hasFieldErrors = response && response.errors && Object.keys(response.errors).length > 0;
 
                 if (hasFieldErrors) {
-
                     $.each(response.errors, function (field, message) {
-
-                        let input = $('[name="' + field + '"]');
-
+                        const input = $('[name="' + field + '"]');
                         input.addClass('is-invalid');
-
-                        input.after(
-                            '<div class="invalid-feedback">' +
-                            message +
-                            '</div>'
-                        );
-
+                        input.after('<div class="invalid-feedback">' + message + '</div>');
                     });
-
                 } else {
-
-                    showAlert(
-                        'danger',
-                        response && response.message
-                            ? response.message
-                            : 'Something went wrong'
-                    );
-
+                    showAlert('danger', response && response.message ? response.message : 'Something went wrong');
                 }
-
             }
-
         });
-
     });
 
     function showAlert(type, message) {
-
         $('.custom-alert').remove();
-
-        let alert = `
+        const alertHtml = `
             <div class="alert alert-${type} custom-alert mt-3">
                 ${message}
             </div>
         `;
-
-        $('#editBlogForm').prepend(alert);
-
+        $('#editBlogForm').prepend(alertHtml);
     }
-
 });
-
 </script>
 
 <?php

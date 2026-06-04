@@ -13,149 +13,135 @@ ob_start();
     href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css"
 >
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="mb-5 mt-2">
+    <span class="hero-pill mb-2">Management</span>
+    <h1 class="hero-title text-start mb-1" style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em;">User Management</h1>
+    <p class="text-muted mb-0" style="font-size: 0.95rem;">View all registered creators and administrators.</p>
+</div>
 
-    <div>
+<div class="admin-card">
 
-        <h1 class="h3 mb-1">
-            User Management
-        </h1>
+    <div class="row g-3 mb-4">
 
-        <p class="text-muted mb-0">
-            View all registered users.
-        </p>
+        <div class="col-md-4">
+
+            <input
+                type="text"
+                class="form-control"
+                id="userSearchInput"
+                placeholder="Search name, username or email"
+            >
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select
+                class="form-select"
+                id="userRoleFilter"
+            >
+
+                <option value="">
+                    All Roles
+                </option>
+
+                <option value="ADMIN">
+                    ADMIN
+                </option>
+
+                <option value="USER">
+                    USER
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select
+                class="form-select"
+                id="userStatusFilter"
+            >
+
+                <option value="">
+                    All Statuses
+                </option>
+
+                <option value="ACTIVE">
+                    ACTIVE
+                </option>
+
+                <option value="BLOCKED">
+                    BLOCKED
+                </option>
+
+                <option value="DEACTIVATED">
+                    DEACTIVATED
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-2">
+
+            <button
+                class="btn-outline w-100 justify-content-center py-2"
+                id="resetUserFiltersBtn"
+            >
+                Reset
+            </button>
+
+        </div>
 
     </div>
 
-</div>
+    <div class="table-responsive">
 
-<div class="card border-0 shadow-sm">
+        <table
+            class="table align-middle mb-0 table-hover"
+            id="usersTable"
+        >
 
-    <div class="card-body">
+            <thead>
 
-        <div class="row g-3 mb-4">
+                <tr>
 
-            <div class="col-md-4">
+                    <th>ID</th>
 
-                <input
-                    type="text"
-                    class="form-control"
-                    id="userSearchInput"
-                    placeholder="Search name, username or email"
-                >
+                    <th>Name</th>
 
-            </div>
+                    <th>Username</th>
 
-            <div class="col-md-3">
+                    <th>Email</th>
 
-                <select
-                    class="form-select"
-                    id="userRoleFilter"
-                >
+                    <th>Role</th>
 
-                    <option value="">
-                        All Roles
-                    </option>
+                    <th>Status</th>
 
-                    <option value="ADMIN">
-                        ADMIN
-                    </option>
+                    <th>Created</th>
 
-                    <option value="USER">
-                        USER
-                    </option>
+                </tr>
 
-                </select>
+            </thead>
 
-            </div>
+            <tbody id="usersTableBody">
 
-            <div class="col-md-3">
+                <tr>
 
-                <select
-                    class="form-select"
-                    id="userStatusFilter"
-                >
+                    <td
+                        colspan="7"
+                        class="text-center text-muted py-4"
+                    >
+                        Loading users...
+                    </td>
 
-                    <option value="">
-                        All Statuses
-                    </option>
+                </tr>
 
-                    <option value="ACTIVE">
-                        ACTIVE
-                    </option>
+            </tbody>
 
-                    <option value="BLOCKED">
-                        BLOCKED
-                    </option>
-
-                    <option value="DEACTIVATED">
-                        DEACTIVATED
-                    </option>
-
-                </select>
-
-            </div>
-
-            <div class="col-md-2">
-
-                <button
-                    class="btn btn-outline-secondary w-100"
-                    id="resetUserFiltersBtn"
-                >
-                    Reset
-                </button>
-
-            </div>
-
-        </div>
-
-        <div class="table-responsive">
-
-            <table
-                class="table align-middle mb-0"
-                id="usersTable"
-            >
-
-                <thead>
-
-                    <tr>
-
-                        <th>ID</th>
-
-                        <th>Name</th>
-
-                        <th>Username</th>
-
-                        <th>Email</th>
-
-                        <th>Role</th>
-
-                        <th>Status</th>
-
-                        <th>Created</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="usersTableBody">
-
-                    <tr>
-
-                        <td
-                            colspan="7"
-                            class="text-center text-muted py-4"
-                        >
-                            Loading users...
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
+        </table>
 
     </div>
 
@@ -269,7 +255,7 @@ $(document).ready(function () {
     ) {
 
         selectElement.removeClass(
-            "border-success text-success border-warning text-warning border-secondary text-secondary"
+            "border-success text-success border-warning text-warning border-danger text-danger border-secondary text-secondary"
         );
 
         if (status === "ACTIVE") {
@@ -282,6 +268,12 @@ $(document).ready(function () {
 
             selectElement.addClass(
                 "border-warning text-warning"
+            );
+
+        } else if (status === "DEACTIVATED") {
+
+            selectElement.addClass(
+                "border-danger text-danger"
             );
 
         } else {
@@ -369,6 +361,8 @@ $(document).ready(function () {
                                                         ? "border-success text-success"
                                                         : user.status === "BLOCKED"
                                                         ? "border-warning text-warning"
+                                                        : user.status === "DEACTIVATED"
+                                                        ? "border-danger text-danger"
                                                         : "border-secondary text-secondary"
                                                     }
                                                 "
@@ -422,28 +416,36 @@ $(document).ready(function () {
                     });
                 }
 
-                $("#usersTableBody").html(rows);
-
                 if ($.fn.DataTable.isDataTable("#usersTable")) {
 
                     $("#usersTable").DataTable().destroy();
                 }
 
-                $("#usersTable").DataTable({
+                $("#usersTableBody").html(rows);
 
-                    pageLength: 10,
+                if (response.data.length > 0) {
 
-                    ordering: false,
+                    $("#usersTable").DataTable({
 
-                    info: true,
+                        pageLength: 10,
 
-                    searching: false,
+                        ordering: false,
 
-                    lengthChange: false
-                });
+                        info: true,
+
+                        searching: false,
+
+                        lengthChange: false
+                    });
+                }
             },
 
             error: function () {
+
+                if ($.fn.DataTable.isDataTable("#usersTable")) {
+
+                    $("#usersTable").DataTable().destroy();
+                }
 
                 $("#usersTableBody").html(`
                     <tr>

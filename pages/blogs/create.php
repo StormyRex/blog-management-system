@@ -247,574 +247,196 @@ if (!$canCreateBlog) {
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <script>
-
 $(function () {
+    const $form = $('#createBlogForm');
+    const $alert = $('#alertBox');
+    const $submitBtn = $('#submitBtn');
 
-    var $form =
-        $('#createBlogForm');
-
-    var $alert =
-        $('#alertBox');
-
-    var $submitBtn =
-        $('#submitBtn');
-
-    /*
-    |--------------------------------------------------------------------------
-    | ALERT
-    |--------------------------------------------------------------------------
-    */
-
-    function showAlert(
-        type,
-        message
-    ) {
-
-        $alert
-            .removeClass(
-                'd-none alert-success alert-danger alert-warning'
-            )
-            .addClass(
-                'alert-' + type
-            )
-            .html(message);
-
+    // Alert helpers
+    function showAlert(type, message) {
+        $alert.removeClass('d-none alert-success alert-danger alert-warning')
+              .addClass('alert-' + type)
+              .html(message);
     }
 
     function hideAlert() {
-
-        $alert
-            .addClass('d-none')
-            .html('');
-
+        $alert.addClass('d-none').html('');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | VALIDATION HELPERS
-    |--------------------------------------------------------------------------
-    */
-
+    // Validation helpers
     function clearErrors() {
-
-        $('.is-invalid')
-            .removeClass('is-invalid');
-
-        $('.invalid-feedback')
-            .text('');
-
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
     }
 
     function clearFieldError(field) {
-
-        $('[name="' + field + '"]')
-            .removeClass('is-invalid');
-
-        $('[data-error-for="' + field + '"]')
-            .text('');
-
+        $('[name="' + field + '"]').removeClass('is-invalid');
+        $('[data-error-for="' + field + '"]').text('');
     }
 
-    function setFieldError(
-        field,
-        message
-    ) {
-
-        $('[name="' + field + '"]')
-            .addClass('is-invalid');
-
-        $('[data-error-for="' + field + '"]')
-            .text(message);
-
+    function setFieldError(field, message) {
+        $('[name="' + field + '"]').addClass('is-invalid');
+        $('[data-error-for="' + field + '"]').text(message);
     }
 
     function applyErrors(errors) {
-
-        $.each(errors, function (
-            key,
-            value
-        ) {
-
-            setFieldError(
-                key,
-                value
-            );
-
+        $.each(errors, function (key, value) {
+            setFieldError(key, value);
         });
-
     }
 
-/*
-|--------------------------------------------------------------------------
-| LIVE FIELD VALIDATION
-|--------------------------------------------------------------------------
-*/
+    // Live validation
+    $('#title').on('input', function () {
+        const val = $(this).val().trim();
+        if (!val) {
+            setFieldError('title', 'Title is required');
+        } else if (val.length < 5) {
+            setFieldError('title', 'Title must be at least 5 characters');
+        } else {
+            clearFieldError('title');
+        }
+    });
 
-$('#title').on(
-    'input',
-    function () {
+    $('#description').on('input', function () {
+        const val = $(this).val().trim();
+        if (!val) {
+            setFieldError('description', 'Description is required');
+        } else if (val.length < 20) {
+            setFieldError('description', 'Description must be at least 20 characters');
+        } else {
+            clearFieldError('description');
+        }
+    });
 
-        var value =
-            $(this)
-                .val()
-                .trim();
+    $('#category').on('change', function () {
+        const val = $(this).val();
+        if (!val) {
+            setFieldError('category', 'Category is required');
+        } else {
+            clearFieldError('category');
+        }
+    });
 
-        if (!value) {
+    // Validate entire form before submission
+    function validateForm() {
+        clearErrors();
+        let isValid = true;
+        
+        const title = $('#title').val().trim();
+        const description = $('#description').val().trim();
+        const category = $('#category').val();
 
-            setFieldError(
-                'title',
-                'Title is required'
-            );
+        if (!title) {
+            setFieldError('title', 'Title is required');
+            isValid = false;
+        } else if (title.length < 5) {
+            setFieldError('title', 'Title must be at least 5 characters');
+            isValid = false;
+        }
 
+        if (!description) {
+            setFieldError('description', 'Description is required');
+            isValid = false;
+        } else if (description.length < 20) {
+            setFieldError('description', 'Description must be at least 20 characters');
+            isValid = false;
+        }
+
+        if (!category) {
+            setFieldError('category', 'Category is required');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    // Handle form submit
+    $form.on('submit', function (event) {
+        event.preventDefault();
+        hideAlert();
+        clearErrors();
+
+        if (!validateForm()) {
+            showAlert('danger', 'Please fix the validation errors.');
             return;
         }
 
-        if (value.length < 5) {
+        $submitBtn.prop('disabled', true)
+                  .html('<span class="spinner-border spinner-border-sm me-2"></span>Creating Blog...');
 
-            setFieldError(
-                'title',
-                'Title must be at least 5 characters'
-            );
-
-            return;
-        }
-
-        clearFieldError(
-            'title'
-        );
-
-    }
-);
-
-$('#description').on(
-    'input',
-    function () {
-
-        var value =
-            $(this)
-                .val()
-                .trim();
-
-        if (!value) {
-
-            setFieldError(
-                'description',
-                'Description is required'
-            );
-
-            return;
-        }
-
-        if (value.length < 20) {
-
-            setFieldError(
-                'description',
-                'Description must be at least 20 characters'
-            );
-
-            return;
-        }
-
-        clearFieldError(
-            'description'
-        );
-
-    }
-);
-
-$('#category').on(
-    'change',
-    function () {
-
-        var value =
-            $(this)
-                .val();
-
-        if (!value) {
-
-            setFieldError(
-                'category',
-                'Category is required'
-            );
-
-            return;
-        }
-
-        clearFieldError(
-            'category'
-        );
-
-    }
-);
-
-/*
-|--------------------------------------------------------------------------
-| FRONTEND VALIDATION
-|--------------------------------------------------------------------------
-*/
-
-function validateForm() {
-
-    clearErrors();
-
-    var isValid = true;
-
-    var title =
-        $('#title')
-            .val()
-            .trim();
-
-    var description =
-        $('#description')
-            .val()
-            .trim();
-
-    var category =
-        $('#category')
-            .val();
-
-    /*
-    |--------------------------------------------------------------------------
-    | TITLE
-    |--------------------------------------------------------------------------
-    */
-
-    if (!title) {
-
-        setFieldError(
-            'title',
-            'Title is required'
-        );
-
-        isValid = false;
-
-    } else if (
-        title.length < 5
-    ) {
-
-        setFieldError(
-            'title',
-            'Title must be at least 5 characters'
-        );
-
-        isValid = false;
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | DESCRIPTION
-    |--------------------------------------------------------------------------
-    */
-
-    if (!description) {
-
-        setFieldError(
-            'description',
-            'Description is required'
-        );
-
-        isValid = false;
-
-    } else if (
-        description.length < 20
-    ) {
-
-        setFieldError(
-            'description',
-            'Description must be at least 20 characters'
-        );
-
-        isValid = false;
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | CATEGORY
-    |--------------------------------------------------------------------------
-    */
-
-    if (!category) {
-
-        setFieldError(
-            'category',
-            'Category is required'
-        );
-
-        isValid = false;
-
-    }
-
-    return isValid;
-
-}
-
-    /*
-    |--------------------------------------------------------------------------
-    | FORM SUBMIT
-    |--------------------------------------------------------------------------
-    */
-
-    $form.on(
-        'submit',
-        function (event) {
-
-            event.preventDefault();
-
-            hideAlert();
-
-            clearErrors();
-
-            /*
-            |--------------------------------------------------------------------------
-            | FRONTEND VALIDATION FIRST
-            |--------------------------------------------------------------------------
-            */
-
-            if (!validateForm()) {
-
-                showAlert(
-                    'danger',
-                    'Please fix the validation errors.'
-                );
-
+        // Step 1: Create the blog metadata
+        $.ajax({
+            url: '<?php echo $baseUrl; ?>/api/blogs/create',
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json'
+        })
+        .done(function (response) {
+            if (!response.success) {
+                if (response.errors) {
+                    applyErrors(response.errors);
+                }
+                showAlert('danger', response.message || 'Validation failed.');
+                $submitBtn.prop('disabled', false).text('Create Blog');
                 return;
-
             }
 
-            $submitBtn
-                .prop('disabled', true)
-                .html(
-                    '<span class="spinner-border spinner-border-sm me-2"></span>Creating Blog...'
-                );
+            const blogId = response.data.id;
+            const fileInput = document.getElementById('media');
+            const file = fileInput.files[0];
 
-            /*
-            |--------------------------------------------------------------------------
-            | CREATE BLOG API
-            |--------------------------------------------------------------------------
-            */
+            // If no media is uploaded, redirect immediately
+            if (!file) {
+                showAlert('success', 'Blog created successfully.');
+                setTimeout(function () {
+                    window.location.href = response.redirect;
+                }, 1000);
+                return;
+            }
+
+            // Step 2: Upload media if selected
+            const formData = new FormData();
+            formData.append('blog_id', blogId);
+
+            if (file.type.indexOf('video/') === 0) {
+                formData.append('video', file);
+            } else {
+                formData.append('image', file);
+            }
+
+            const originalButtonHtml = $submitBtn.html();
+            $submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Uploading Media...');
 
             $.ajax({
-
-                url:
-                    '<?php echo $baseUrl; ?>/api/blogs/create',
-
+                url: '<?php echo $baseUrl; ?>/api/upload',
                 type: 'POST',
-
-                data:
-                    $form.serialize(),
-
+                data: formData,
+                processData: false,
+                contentType: false,
                 dataType: 'json'
-
             })
-
-            .done(function (response) {
-
-                /*
-                |--------------------------------------------------------------------------
-                | BACKEND VALIDATION
-                |--------------------------------------------------------------------------
-                */
-
-                if (!response.success) {
-
-                    if (
-                        response.errors
-                    ) {
-
-                        applyErrors(
-                            response.errors
-                        );
-
-                    }
-
-                    showAlert(
-                        'danger',
-                        response.message ||
-                        'Validation failed.'
-                    );
-
-                    $submitBtn.prop(
-                        'disabled',
-                        false
-                    );
-
-                    return;
-
-                }
-
-                var blogId =
-                    response.data.id;
-
-                var fileInput =
-                    document.getElementById('media');
-
-                var file =
-                    fileInput.files[0];
-
-                /*
-                |--------------------------------------------------------------------------
-                | IF NO FILE
-                |--------------------------------------------------------------------------
-                */
-
-                if (!file) {
-
-                    showAlert(
-                        'success',
-                        'Blog created successfully.'
-                    );
-
-                    setTimeout(function () {
-
-                        window.location.href =
-                            response.redirect;
-
-                    }, 1000);
-
-                    return;
-
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | FILE UPLOAD
-                |--------------------------------------------------------------------------
-                */
-
-                var formData =
-                    new FormData();
-
-                formData.append(
-                    'blog_id',
-                    blogId
-                );
-
-                if (
-                    file.type.indexOf('video/')
-                    === 0
-                ) {
-
-                    formData.append(
-                        'video',
-                        file
-                    );
-
-                } else {
-
-                    formData.append(
-                        'image',
-                        file
-                    );
-
-                }
-
-/*
-|--------------------------------------------------------------------------
-| SHOW LOADING STATE
-|--------------------------------------------------------------------------
-*/
-
-var originalButtonHtml =
-    $submitBtn.html();
-
-$submitBtn.html(
-    '<span class="spinner-border spinner-border-sm me-2"></span>Uploading Media...'
-);
-
-/*
-|--------------------------------------------------------------------------
-| UPLOAD MEDIA
-|--------------------------------------------------------------------------
-*/
-
-$.ajax({
-
-    url:
-        '<?php echo $baseUrl; ?>/api/upload',
-
-    type: 'POST',
-
-    data:
-        formData,
-
-    processData: false,
-
-    contentType: false,
-
-    dataType: 'json'
-
-})
-
-.done(function () {
-
-    showAlert(
-        'success',
-        'Blog created successfully.'
-    );
-
-    setTimeout(function () {
-
-        window.location.href =
-            response.redirect;
-
-    }, 1000);
-
-})
-
-.fail(function (xhr) {
-
-    var uploadResponse =
-        xhr.responseJSON;
-
-    showAlert(
-        'danger',
-        uploadResponse?.message ||
-        'Media upload failed.'
-    );
-
-    $submitBtn
-        .prop('disabled', false)
-        .html(originalButtonHtml);
-
-});
+            .done(function () {
+                showAlert('success', 'Blog created successfully.');
+                setTimeout(function () {
+                    window.location.href = response.redirect;
+                }, 1000);
             })
-
             .fail(function (xhr) {
-
-                var response =
-                    xhr.responseJSON;
-
-                if (
-                    response &&
-                    response.errors
-                ) {
-
-                    applyErrors(
-                        response.errors
-                    );
-
-                }
-
-                showAlert(
-                    'danger',
-                    response?.message ||
-                    'Something went wrong.'
-                );
-
-                $submitBtn.prop(
-                    'disabled',
-                    false
-                );
-
+                const uploadResponse = xhr.responseJSON;
+                showAlert('danger', uploadResponse?.message || 'Media upload failed.');
+                $submitBtn.prop('disabled', false).html('Create Blog');
             });
-
-        }
-    );
-
+        })
+        .fail(function (xhr) {
+            const response = xhr.responseJSON;
+            if (response && response.errors) {
+                applyErrors(response.errors);
+            }
+            showAlert('danger', response?.message || 'Something went wrong.');
+            $submitBtn.prop('disabled', false).text('Create Blog');
+        });
+    });
 });
-
 </script>
 
 <?php

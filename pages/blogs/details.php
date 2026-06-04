@@ -177,7 +177,7 @@ ob_start();
                 <span class="action-label">Share</span>
             </button>
 
-            <?php if ($isOwner || $isAdmin) { ?>
+            <?php if ($isOwner) { ?>
                 <a
                     href="<?php echo $baseUrl; ?>/blogs/edit?id=<?php echo (int) $blog['id']; ?>"
                     class="action-btn ms-auto"
@@ -203,44 +203,28 @@ $baseUrlJs   = json_encode($baseUrl);
 $blogIdJs    = json_encode((int) $blog['id']);
 $blogTitleJs = json_encode($blog['title']);
 
-$pageScripts = ($pageScripts ?? '') . <<<'SCRIPT'
+$pageScripts = ($pageScripts ?? '') . '
 <script>
+    var baseUrl = ' . $baseUrlJs . ';
+    var blogId = ' . $blogIdJs . ';
+    var blogTitle = ' . $blogTitleJs . ';
 
 $(document).ready(function () {
+    var isLoggedIn = $("body").attr("data-is-logged-in") === "1";
 
-    var isLoggedIn = $('body').attr('data-is-logged-in') === '1';
-    var baseUrl    =
-SCRIPT
-. $baseUrlJs .
-<<<'SCRIPT'
-;
-
-    var blogId    =
-SCRIPT
-. $blogIdJs .
-<<<'SCRIPT'
-;
-
-    var blogTitle =
-SCRIPT
-. $blogTitleJs .
-<<<'SCRIPT'
-;
-
-    // ── Track visit in localStorage ─────────────────────────────────────
+    // Track visit in localStorage
     (function () {
-
-        var MAX_HISTORY = 10;
-        var history     = [];
+        const MAX_HISTORY = 10;
+        let history = [];
 
         try {
-            history = JSON.parse(localStorage.getItem('blogVisitHistory') || '[]');
+            history = JSON.parse(localStorage.getItem("blogVisitHistory") || "[]");
         } catch (e) {}
 
-        history = history.filter(function (item) { return item.id !== blogId; });
+        history = history.filter(item => item.id !== blogId);
 
-        var now       = new Date();
-        var visitedAt = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const now = new Date();
+        const visitedAt = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
         history.unshift({ id: blogId, title: blogTitle, visitedAt: visitedAt });
 
@@ -248,76 +232,74 @@ SCRIPT
             history = history.slice(0, MAX_HISTORY);
         }
 
-        try { localStorage.setItem('blogVisitHistory', JSON.stringify(history)); } catch (e) {}
-
+        try { 
+            localStorage.setItem("blogVisitHistory", JSON.stringify(history)); 
+        } catch (e) {}
     }());
 
-    // ── Action buttons (like / comment / share) ─────────────────────────
-    $(document).on('click', '[data-action]', function () {
+    // Action buttons (like / comment / share)
+    $(document).on("click", "[data-action]", function () {
+        const $btn = $(this);
+        const action = $btn.data("action");
+        const clickedBlogId = $btn.data("blog-id");
+        const title = $btn.data("title") || "";
 
-        var $btn   = $(this);
-        var action = $btn.data('action');
-        var blogId = $btn.data('blog-id');
-        var title  = $btn.data('title') || '';
-
-        if ($btn.data('requires-login') && !isLoggedIn) {
-            window.BlogSphere && window.BlogSphere.showGuestModal();
+        if ($btn.data("requires-login") && !isLoggedIn) {
+            if (window.BlogSphere && window.BlogSphere.showGuestModal) {
+                window.BlogSphere.showGuestModal();
+            }
             return;
         }
 
-        if (action === 'like') {
+        if (action === "like") {
+            const liked = $btn.data("liked") == "1";
+            const newLiked = !liked;
+            const count = parseInt($btn.data("like-count"), 10) || 0;
+            const newCount = newLiked ? count + 1 : Math.max(0, count - 1);
 
-            var liked    = $btn.data('liked') == '1';
-            var newLiked = !liked;
-            var count    = parseInt($btn.data('like-count'), 10) || 0;
-            var newCount = newLiked ? count + 1 : Math.max(0, count - 1);
+            $btn.toggleClass("liked", newLiked);
+            $btn.find("i").toggleClass("bi-heart-fill", newLiked).toggleClass("bi-heart", !newLiked);
+            $btn.find(".like-count").text(newCount);
+            $btn.data({ liked: newLiked ? "1" : "0", "like-count": newCount });
 
-            $btn.toggleClass('liked', newLiked);
-            $btn.find('i').toggleClass('bi-heart-fill', newLiked).toggleClass('bi-heart', !newLiked);
-            $btn.find('.like-count').text(newCount);
-            $btn.data({ liked: newLiked ? '1' : '0', 'like-count': newCount });
-
-            $.post(baseUrl + '/api/blogs/like', { blog_id: blogId });
+            $.post(baseUrl + "/api/blogs/like", { blogId: clickedBlogId });
         }
 
-        if (action === 'comment') {
+        if (action === "comment") {
             if (window.BlogSphere && window.BlogSphere.openCommentModal) {
-                window.BlogSphere.openCommentModal(blogId, title);
+                window.BlogSphere.openCommentModal(clickedBlogId, title);
             }
         }
 
-        if (action === 'share') {
+        if (action === "share") {
+            const shareUrl = $btn.data("share-url");
+            const sc = parseInt($btn.data("share-count"), 10) || 0;
 
-            var shareUrl = $btn.data('share-url');
-            var sc       = parseInt($btn.data('share-count'), 10) || 0;
+            $btn.find(".share-count").text(sc + 1);
+            $btn.data("share-count", sc + 1);
 
-            $btn.find('.share-count').text(sc + 1);
-            $btn.data('share-count', sc + 1);
-
-            $.post(baseUrl + '/api/blogs/share', { blog_id: blogId });
+            $.post(baseUrl + "/api/blogs/share", { blogId: clickedBlogId });
 
             if (navigator.share) {
                 navigator.share({ title: title, url: shareUrl }).catch(function () {});
             } else {
                 navigator.clipboard.writeText(shareUrl).then(function () {
-                    var $label = $btn.find('.action-label');
-                    var orig   = $label.text();
-                    $label.text('Copied!');
+                    const $label = $btn.find(".action-label");
+                    const orig = $label.text();
+                    $label.text("Copied!");
                     setTimeout(function () { $label.text(orig); }, 1800);
                 });
             }
         }
     });
 
-    // ── Comment count callback (from Comment.php modal) ─────────────────
-    window.updateBlogCommentCount = function (blogId, count) {
-        $('#detailsCommentCount').text(parseInt(count, 10) || 0);
+    // Comment count callback (from Comment.php modal)
+    window.updateBlogCommentCount = function (id, count) {
+        $("#detailsCommentCount").text(parseInt(count, 10) || 0);
     };
-
 });
-
 </script>
-SCRIPT;
+';
 
 require __DIR__ . '/../../layouts/MainLayout.php';
 

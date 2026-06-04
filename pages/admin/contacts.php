@@ -13,85 +13,83 @@ ob_start();
     href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css"
 >
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="mb-5 mt-2">
+    <span class="hero-pill mb-2">Support</span>
+    <h1 class="hero-title text-start mb-1" style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em;">Contact Messages</h1>
+    <p class="text-muted mb-0" style="font-size: 0.95rem;">View and respond to inquiries submitted by visitors.</p>
+</div>
 
-    <div>
+<div class="admin-card">
 
-        <h1 class="h3 mb-1">
-            Contact Messages
-        </h1>
+    <div class="row g-3 mb-4">
 
-        <p class="text-muted mb-0">
-            View messages submitted through the Contact Us page.
-        </p>
+        <div class="col-md-5">
+
+            <input
+                type="text"
+                class="form-control"
+                id="contactSearchInput"
+                placeholder="Search name, email or subject"
+            >
+
+        </div>
+
+        <div class="col-md-2">
+
+            <button
+                class="btn-outline w-100 justify-content-center py-2"
+                id="resetContactFiltersBtn"
+            >
+                Reset
+            </button>
+
+        </div>
 
     </div>
 
-</div>
+    <div class="table-responsive">
 
-<div class="card border-0 shadow-sm">
+        <table
+            class="table align-middle mb-0 table-hover"
+            id="contactsTable"
+        >
 
-    <div class="card-body">
+            <thead>
 
-        <div class="row g-3 mb-4">
+                <tr>
 
-            <div class="col-md-5">
+                    <th>ID</th>
 
-                <input
-                    type="text"
-                    class="form-control"
-                    id="contactSearchInput"
-                    placeholder="Search name, email or subject"
-                >
+                    <th>Name</th>
 
-            </div>
+                    <th>Email</th>
 
-            <div class="col-md-2">
+                    <th>Subject</th>
 
-                <button
-                    class="btn btn-outline-secondary w-100"
-                    id="resetContactFiltersBtn"
-                >
-                    Reset
-                </button>
+                    <th>Received At</th>
 
-            </div>
+                    <th>Action</th>
 
-        </div>
+                </tr>
 
-        <div class="table-responsive">
+            </thead>
 
-            <table
-                class="table align-middle mb-0"
-                id="contactsTable"
-            >
+            <tbody id="contactsTableBody">
 
-                <thead>
+                <tr>
 
-                    <tr>
+                    <td
+                        colspan="6"
+                        class="text-center text-muted py-4"
+                    >
+                        Loading messages...
+                    </td>
 
-                        <th>ID</th>
+                </tr>
 
-                        <th>Name</th>
+            </tbody>
 
-                        <th>Email</th>
-
-                        <th>Subject</th>
-
-                        <th>Received At</th>
-
-                        <th>Action</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="contactsTableBody">
-                </tbody>
-
-            </table>
-
-        </div>
+        </table>
 
     </div>
 
@@ -220,7 +218,18 @@ $(document).ready(function () {
 
                 let rows = "";
 
-                if (messagesData.length > 0) {
+                if (messagesData.length === 0) {
+                    rows = `
+                        <tr>
+                            <td
+                                colspan="6"
+                                class="text-center text-muted py-4"
+                            >
+                                No messages found.
+                            </td>
+                        </tr>
+                    `;
+                } else {
                     messagesData.forEach(function (msg, index) {
                         rows += `
                             <tr>
@@ -239,28 +248,35 @@ $(document).ready(function () {
                     });
                 }
 
-                $("#contactsTableBody").html(rows);
-
                 if ($.fn.DataTable.isDataTable("#contactsTable")) {
 
                     $("#contactsTable").DataTable().destroy();
                 }
 
-                $("#contactsTable").DataTable({
+                $("#contactsTableBody").html(rows);
 
-                    pageLength: 10,
+                if (messagesData.length > 0) {
+                    $("#contactsTable").DataTable({
 
-                    ordering: false,
+                        pageLength: 10,
 
-                    info: true,
+                        ordering: false,
 
-                    searching: false,
+                        info: true,
 
-                    lengthChange: false
-                });
+                        searching: false,
+
+                        lengthChange: false
+                    });
+                }
             },
 
             error: function () {
+
+                if ($.fn.DataTable.isDataTable("#contactsTable")) {
+
+                    $("#contactsTable").DataTable().destroy();
+                }
 
                 $("#contactsTableBody").html(`
                     <tr>

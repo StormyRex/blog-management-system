@@ -128,11 +128,11 @@ ob_start();
                         </div>
 
                         <!-- Actions -->
-                        <div class="px-3 py-2.5 d-flex gap-2" style="border-top:1px solid #f0f0f0;">
+                        <div class="px-3 py-2.5 d-flex gap-3" style="border-top:1px solid #f0f0f0;">
                             <?php if ($canUpdateBlog) { ?>
                                 <a
                                     href="<?php echo $baseUrl; ?>/blogs/edit?id=<?php echo $blog['id']; ?>"
-                                    class="btn-edit"
+                                    class="btn-edit flex-grow-1 justify-content-center"
                                     onclick="event.stopPropagation();"
                                 >
                                     <i class="bi bi-pencil me-1"></i> Edit
@@ -141,7 +141,7 @@ ob_start();
 
                             <?php if ($canDeleteBlog) { ?>
                                 <button
-                                    class="btn-delete delete-blog-btn"
+                                    class="btn-delete delete-blog-btn flex-grow-1 justify-content-center"
                                     data-id="<?php echo $blog['id']; ?>"
                                     onclick="event.stopPropagation();"
                                 >
@@ -168,9 +168,9 @@ ob_start();
     aria-hidden="true"
 >
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="deleteBlogModalLabel" style="font-size: 1.15rem; letter-spacing: -0.02em;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBlogModalLabel">
                     Delete Blog
                 </h5>
                 <button
@@ -180,15 +180,14 @@ ob_start();
                     aria-label="Close"
                 ></button>
             </div>
-            <div class="modal-body py-3 text-muted" style="font-size: 0.95rem;">
+            <div class="modal-body">
                 Are you sure you want to delete this blog? This action cannot be undone.
             </div>
-            <div class="modal-footer border-0 pt-0">
+            <div class="modal-footer">
                 <button
                     type="button"
-                    class="btn-edit"
+                    class="btn btn-secondary"
                     data-bs-dismiss="modal"
-                    style="padding: 8px 16px;"
                 >
                     Cancel
                 </button>
@@ -196,7 +195,6 @@ ob_start();
                     type="button"
                     class="btn btn-danger"
                     id="confirmDeleteBtn"
-                    style="border-radius: 8px; font-weight: 600; padding: 8px 16px; font-size: 0.85rem;"
                 >
                     Delete
                 </button>
@@ -207,28 +205,19 @@ ob_start();
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <script>
-
 $(document).ready(function () {
-
-    var $alert = $('#deleteAlert');
-    var $modal = $('#deleteBlogModal');
-    var modalInstance = new bootstrap.Modal($modal[0]);
-    var $confirmBtn = $('#confirmDeleteBtn');
-    var selectedBlogId = null;
+    const $alert = $('#deleteAlert');
+    const $modal = $('#deleteBlogModal');
+    const modalInstance = new bootstrap.Modal($modal[0]);
+    const $confirmBtn = $('#confirmDeleteBtn');
+    let selectedBlogId = null;
 
     function showAlert(type, message) {
         if (!message) {
-            $alert
-                .addClass('d-none')
-                .removeClass('alert-success alert-danger')
-                .text('');
+            $alert.addClass('d-none').removeClass('alert-success alert-danger').text('');
             return;
         }
-
-        $alert
-            .removeClass('d-none alert-success alert-danger')
-            .addClass('alert-' + type)
-            .text(message);
+        $alert.removeClass('d-none alert-success alert-danger').addClass('alert-' + type).text(message);
     }
 
     $('.delete-blog-btn').on('click', function () {
@@ -238,69 +227,37 @@ $(document).ready(function () {
     });
 
     $confirmBtn.on('click', function () {
-
-        if (!selectedBlogId) {
-            return;
-        }
+        if (!selectedBlogId) return;
 
         $confirmBtn.prop('disabled', true);
 
         $.ajax({
-
             url: '<?php echo $baseUrl; ?>/api/blogs/delete',
-
             type: 'POST',
-
-            data: {
-                id: selectedBlogId
-            },
-
+            data: { id: selectedBlogId },
             dataType: 'json',
-
             success: function (response) {
-
                 if (response.success) {
-
                     $('#blog-' + selectedBlogId).fadeOut(300, function () {
-
                         $(this).remove();
-
                     });
-
                     showAlert('success', response.message);
-
                 } else {
-
                     showAlert('danger', response.message || 'Something went wrong');
-
                 }
             },
-
             error: function (xhr) {
-
-                var response = xhr.responseJSON;
-
-                showAlert(
-                    'danger',
-                    response && response.message
-                        ? response.message
-                        : 'Something went wrong'
-                );
-
+                const response = xhr.responseJSON;
+                showAlert('danger', response && response.message ? response.message : 'Something went wrong');
             },
-
             complete: function () {
                 modalInstance.hide();
                 $confirmBtn.prop('disabled', false);
                 selectedBlogId = null;
             }
-
         });
-
     });
-
 });
-
 </script>
 
 <?php

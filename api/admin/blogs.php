@@ -41,9 +41,7 @@ $query = "
         ON users.id = blogs.user_id
 ";
 
-$where = [
-    "blogs.status != 'DELETED'"
-];
+$where = [];
 
 $params = [];
 

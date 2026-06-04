@@ -13,73 +13,85 @@ ob_start();
     href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css"
 >
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="mb-5 mt-2">
+    <span class="hero-pill mb-2">Access Control</span>
+    <h1 class="hero-title text-start mb-1" style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em;">Permission Management</h1>
+    <p class="text-muted mb-0" style="font-size: 0.95rem;">Configure creator permissions for creating, updating, and deleting blogs.</p>
+</div>
 
-    <div>
+<div class="admin-card">
 
-        <h1 class="h3 mb-1">
-            Permission Management
-        </h1>
+    <div class="row g-3 mb-4">
 
-        <p class="text-muted mb-0">
-            Manage user permissions.
-        </p>
+        <div class="col-md-5">
+
+            <input
+                type="text"
+                class="form-control"
+                id="permissionSearchInput"
+                placeholder="Search name, username or email"
+            >
+
+        </div>
+
+        <div class="col-md-2">
+
+            <button
+                class="btn-outline w-100 justify-content-center py-2"
+                id="resetPermissionFiltersBtn"
+            >
+                Reset
+            </button>
+
+        </div>
 
     </div>
 
-</div>
+    <div class="table-responsive">
 
-<div class="card border-0 shadow-sm">
+        <table
+            class="table align-middle mb-0 table-hover"
+            id="permissionsTable"
+        >
 
-    <div class="card-body">
+            <thead>
 
-        <div class="table-responsive">
+                <tr>
 
-            <table
-                class="table align-middle mb-0"
-                id="permissionsTable"
-            >
+                    <th>ID</th>
 
-                <thead>
+                    <th>Name</th>
 
-                    <tr>
+                    <th>Username</th>
 
-                        <th>ID</th>
+                    <th>Email</th>
 
-                        <th>Name</th>
+                    <th>Create Blog</th>
 
-                        <th>Username</th>
+                    <th>Update Blog</th>
 
-                        <th>Email</th>
+                    <th>Delete Blog</th>
 
-                        <th>Create Blog</th>
+                </tr>
 
-                        <th>Update Blog</th>
+            </thead>
 
-                        <th>Delete Blog</th>
+            <tbody id="permissionsTableBody">
 
-                    </tr>
+                <tr>
 
-                </thead>
+                    <td
+                        colspan="7"
+                        class="text-center text-muted py-4"
+                    >
+                        Loading permissions...
+                    </td>
 
-                <tbody id="permissionsTableBody">
+                </tr>
 
-                    <tr>
+            </tbody>
 
-                        <td
-                            colspan="7"
-                            class="text-center text-muted py-4"
-                        >
-                            Loading permissions...
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
+        </table>
 
     </div>
 
@@ -158,7 +170,14 @@ $scripts = '
 const BASE_URL =
     "' . $baseUrl . '";
 
+const permissionFilters = {
+
+    search: ""
+};
+
 $(document).ready(function () {
+
+    let permissionSearchTimeout = null;
 
     let selectedCheckbox = null;
 
@@ -181,7 +200,7 @@ $(document).ready(function () {
             )
         );
 
-    function loadPermissions() {
+    function loadPermissions(filters = {}) {
 
         $.ajax({
 
@@ -190,6 +209,11 @@ $(document).ready(function () {
                 "/api/admin/permissions",
 
             type: "GET",
+
+            data: {
+
+                search: filters.search || ""
+            },
 
             dataType: "json",
 
@@ -242,7 +266,7 @@ $(document).ready(function () {
                                 return false;
                             }
 
-                            return userPermissions.some(
+                            const isRestricted = userPermissions.some(
                                 up =>
                                     parseInt(
                                         up.user_id
@@ -257,6 +281,8 @@ $(document).ready(function () {
                                             permission.id
                                         )
                             );
+
+                            return !isRestricted;
                         }
 
                         function getPermissionId(
@@ -359,10 +385,6 @@ $(document).ready(function () {
                     });
                 }
 
-                $("#permissionsTableBody").html(
-                    rows
-                );
-
                 if (
                     $.fn.DataTable.isDataTable(
                         "#permissionsTable"
@@ -374,21 +396,38 @@ $(document).ready(function () {
                         .destroy();
                 }
 
-                $("#permissionsTable").DataTable({
+                $("#permissionsTableBody").html(
+                    rows
+                );
 
-                    pageLength: 10,
+                if (users.length > 0) {
+                    $("#permissionsTable").DataTable({
 
-                    ordering: false,
+                        pageLength: 10,
 
-                    info: true,
+                        ordering: false,
 
-                    searching: true,
+                        info: true,
 
-                    lengthChange: false
-                });
+                        searching: false,
+
+                        lengthChange: false
+                    });
+                }
             },
 
             error: function () {
+
+                if (
+                    $.fn.DataTable.isDataTable(
+                        "#permissionsTable"
+                    )
+                ) {
+
+                    $("#permissionsTable")
+                        .DataTable()
+                        .destroy();
+                }
 
                 $("#permissionsTableBody").html(`
                     <tr>
@@ -404,7 +443,41 @@ $(document).ready(function () {
         });
     }
 
-    loadPermissions();
+    loadPermissions(permissionFilters);
+
+    $("#permissionSearchInput").on(
+        "keyup",
+        function () {
+
+            clearTimeout(permissionSearchTimeout);
+
+            const searchValue =
+                $(this).val().trim();
+
+            permissionSearchTimeout = setTimeout(
+                function () {
+
+                    permissionFilters.search =
+                        searchValue;
+
+                    loadPermissions(permissionFilters);
+
+                },
+                400
+            );
+        }
+    );
+
+    $("#resetPermissionFiltersBtn").on(
+        "click",
+        function () {
+
+            permissionFilters.search = "";
+            $("#permissionSearchInput").val("");
+
+            loadPermissions(permissionFilters);
+        }
+    );
 
     $(document).on(
         "change",

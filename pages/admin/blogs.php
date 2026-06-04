@@ -18,147 +18,135 @@ ob_start();
     href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css"
 >
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="mb-5 mt-2">
+    <span class="hero-pill mb-2">Management</span>
+    <h1 class="hero-title text-start mb-1" style="font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em;">Blog Management</h1>
+    <p class="text-muted mb-0" style="font-size: 0.95rem;">Moderate and manage all published and draft articles.</p>
+</div>
 
-    <div>
+<div class="admin-card">
 
-        <h1 class="h3 mb-1">
-            Blog Management
-        </h1>
+    <div class="row g-3 mb-4">
 
-        <p class="text-muted mb-0">
-            View all blogs.
-        </p>
+        <div class="col-md-4">
+
+            <input
+                type="text"
+                class="form-control"
+                id="blogSearchInput"
+                placeholder="Search title or creator"
+            >
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select
+                class="form-select"
+                id="blogVisibilityFilter"
+            >
+
+                <option value="">
+                    All Visibility
+                </option>
+
+                <option value="PUBLIC">
+                    PUBLIC
+                </option>
+
+                <option value="PRIVATE">
+                    PRIVATE
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select
+                class="form-select"
+                id="blogStatusFilter"
+            >
+
+                <option value="">
+                    All Statuses
+                </option>
+
+                <option value="ACTIVE">
+                    ACTIVE
+                </option>
+
+                <option value="RESTRICTED">
+                    RESTRICTED
+                </option>
+
+                <option value="DELETED">
+                    DELETED
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-2">
+
+            <button
+                class="btn-outline w-100 justify-content-center py-2"
+                id="resetBlogFiltersBtn"
+            >
+                Reset
+            </button>
+
+        </div>
 
     </div>
 
-</div>
+    <div class="table-responsive">
 
-<div class="card border-0 shadow-sm">
+        <table
+            class="table align-middle mb-0 table-hover"
+            id="blogsTable"
+        >
 
-    <div class="card-body">
+            <thead>
 
-        <div class="row g-3 mb-4">
+                <tr>
 
-            <div class="col-md-4">
+                    <th>Thumbnail</th>
 
-                <input
-                    type="text"
-                    class="form-control"
-                    id="blogSearchInput"
-                    placeholder="Search title or creator"
-                >
+                    <th>Title</th>
 
-            </div>
+                    <th>Creator</th>
 
-            <div class="col-md-3">
+                    <th>Category</th>
 
-                <select
-                    class="form-select"
-                    id="blogVisibilityFilter"
-                >
+                    <th>Visibility</th>
 
-                    <option value="">
-                        All Visibility
-                    </option>
+                    <th>Status</th>
 
-                    <option value="PUBLIC">
-                        PUBLIC
-                    </option>
+                    <th>Created</th>
 
-                    <option value="PRIVATE">
-                        PRIVATE
-                    </option>
+                </tr>
 
-                </select>
+            </thead>
 
-            </div>
+            <tbody id="blogsTableBody">
 
-            <div class="col-md-3">
+                <tr>
 
-                <select
-                    class="form-select"
-                    id="blogStatusFilter"
-                >
+                    <td
+                        colspan="7"
+                        class="text-center text-muted py-4"
+                    >
+                        Loading blogs...
+                    </td>
 
-                    <option value="">
-                        All Statuses
-                    </option>
+                </tr>
 
-                    <option value="ACTIVE">
-                        ACTIVE
-                    </option>
+            </tbody>
 
-                    <option value="RESTRICTED">
-                        RESTRICTED
-                    </option>
-
-                </select>
-
-            </div>
-
-            <div class="col-md-2">
-
-                <button
-                    class="btn btn-outline-secondary w-100"
-                    id="resetBlogFiltersBtn"
-                >
-                    Reset
-                </button>
-
-            </div>
-
-        </div>
-
-        <div class="table-responsive">
-
-            <table
-                class="table align-middle mb-0"
-                id="blogsTable"
-            >
-
-                <thead>
-
-                    <tr>
-
-                        <th>Thumbnail</th>
-
-                        <th>Title</th>
-
-                        <th>Creator</th>
-
-                        <th>Category</th>
-
-                        <th>Visibility</th>
-
-                        <th>Status</th>
-
-                        <th>Created</th>
-
-                        <th>Actions</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="blogsTableBody">
-
-                    <tr>
-
-                        <td
-                            colspan="8"
-                            class="text-center text-muted py-4"
-                        >
-                            Loading blogs...
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
+        </table>
 
     </div>
 
@@ -312,7 +300,7 @@ $(document).ready(function () {
                     rows = `
                         <tr>
                             <td
-                                colspan="8"
+                                colspan="7"
                                 class="text-center text-muted py-4"
                             >
                                 No blogs found.
@@ -328,13 +316,11 @@ $(document).ready(function () {
                             <div
                                 class="bg-light border rounded d-flex align-items-center justify-content-center"
                                 style="
-                                    width: 80px;
-                                    height: 45px;
+                                    width: 70px;
+                                    height: 40px;
                                 "
                             >
-                                <small class="text-muted">
-                                    No Media
-                                </small>
+                                <i class="bi bi-image text-muted" style="font-size: 0.9rem;"></i>
                             </div>
                         `;
 
@@ -350,10 +336,10 @@ $(document).ready(function () {
                                 thumbnailHtml = `
                                     <img
                                         src="${blog.thumbnail.url}"
-                                        class="rounded border"
+                                        class="rounded border shadow-sm"
                                         style="
-                                            width: 80px;
-                                            height: 45px;
+                                            width: 70px;
+                                            height: 40px;
                                             object-fit: cover;
                                         "
                                     >
@@ -363,10 +349,10 @@ $(document).ready(function () {
 
                                 thumbnailHtml = `
                                     <video
-                                        class="rounded border"
+                                        class="rounded border shadow-sm"
                                         style="
-                                            width: 80px;
-                                            height: 45px;
+                                            width: 70px;
+                                            height: 40px;
                                             object-fit: cover;
                                         "
                                     >
@@ -386,7 +372,7 @@ $(document).ready(function () {
                                 </td>
 
                                 <td>
-                                    ${blog.title}
+                                    <a href="${BASE_URL}/blogs/details?id=${blog.id}" target="_blank" class="fw-semibold text-dark">${blog.title}</a>
                                 </td>
 
                                 <td>
@@ -402,12 +388,12 @@ $(document).ready(function () {
                                     ${
                                         blog.visibility === "PUBLIC"
                                         ? `
-                                            <span class="badge bg-success">
+                                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2.5 py-1" style="font-size: 0.75rem; font-weight: 600;">
                                                 PUBLIC
                                             </span>
                                         `
                                         : `
-                                            <span class="badge bg-secondary">
+                                            <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-2.5 py-1" style="font-size: 0.75rem; font-weight: 600;">
                                                 PRIVATE
                                             </span>
                                         `
@@ -425,48 +411,75 @@ $(document).ready(function () {
                                                     form-select
                                                     form-select-sm
                                                     blog-status-select
-                                                    ${
-                                                        blog.status === "ACTIVE"
-                                                        ? "border-success text-success"
-                                                        : "border-danger text-danger"
-                                                    }
-                                                "
-                                                data-blog-id="${blog.id}"
-                                                data-current-status="${blog.status}"
-                                            >
+                                                     ${
+                                                         blog.status === "ACTIVE"
+                                                         ? "border-success text-success"
+                                                         : blog.status === "RESTRICTED"
+                                                         ? "border-warning text-warning"
+                                                         : blog.status === "DELETED"
+                                                         ? "border-danger text-danger"
+                                                         : "border-secondary text-secondary"
+                                                     }
+                                                 "
+                                                 data-blog-id="${blog.id}"
+                                                 data-current-status="${blog.status}"
+                                             >
 
-                                                <option
-                                                    value="ACTIVE"
-                                                    ${
-                                                        blog.status === "ACTIVE"
-                                                        ? "selected"
-                                                        : ""
-                                                    }
-                                                >
-                                                    ACTIVE
-                                                </option>
+                                                 <option
+                                                     value="ACTIVE"
+                                                     ${
+                                                         blog.status === "ACTIVE"
+                                                         ? "selected"
+                                                         : ""
+                                                     }
+                                                 >
+                                                     ACTIVE
+                                                 </option>
 
-                                                <option
-                                                    value="RESTRICTED"
-                                                    ${
-                                                        blog.status === "RESTRICTED"
-                                                        ? "selected"
-                                                        : ""
-                                                    }
-                                                >
-                                                    RESTRICTED
-                                                </option>
+                                                 <option
+                                                     value="RESTRICTED"
+                                                     ${
+                                                         blog.status === "RESTRICTED"
+                                                         ? "selected"
+                                                         : ""
+                                                     }
+                                                 >
+                                                     RESTRICTED
+                                                 </option>
 
-                                            </select>
-                                        `
-                                        : `
-                                            <span
-                                                class="badge ${
-                                                    blog.status === "ACTIVE"
-                                                    ? "bg-success"
-                                                    : "bg-danger"
-                                                }"
-                                            >
+                                                 ${
+                                                     CAN_DELETE_BLOG
+                                                     ? `
+                                                         <option
+                                                             value="DELETED"
+                                                             ${
+                                                                 blog.status === "DELETED"
+                                                                 ? "selected"
+                                                                 : ""
+                                                             }
+                                                             class="text-danger"
+                                                             style="font-weight: 600;"
+                                                         >
+                                                             DELETED
+                                                         </option>
+                                                     `
+                                                     : ""
+                                                 }
+
+                                             </select>
+                                         `
+                                         : `
+                                             <span
+                                                 class="badge ${
+                                                     blog.status === "ACTIVE"
+                                                     ? "bg-success"
+                                                     : blog.status === "RESTRICTED"
+                                                     ? "bg-warning text-dark"
+                                                     : blog.status === "DELETED"
+                                                     ? "bg-danger"
+                                                     : "bg-secondary"
+                                                 }"
+                                             >
                                                 ${blog.status}
                                             </span>
                                         `
@@ -478,32 +491,6 @@ $(document).ready(function () {
                                     ${blog.created_at}
                                 </td>
 
-                                <td>
-
-                                    ${
-                                        CAN_DELETE_BLOG
-                                        ? `
-                                            <button
-                                                class="
-                                                    btn
-                                                    btn-sm
-                                                    btn-outline-danger
-                                                    delete-blog-btn
-                                                "
-                                                data-blog-id="${blog.id}"
-                                            >
-                                                Delete
-                                            </button>
-                                        `
-                                        : `
-                                            <span class="text-muted small">
-                                                No actions
-                                            </span>
-                                        `
-                                    }
-
-                                </td>
-
                             </tr>
                         `;
                     });
@@ -511,26 +498,33 @@ $(document).ready(function () {
 
                 $("#blogsTableBody").html(rows);
 
-                $("#blogsTable").DataTable({
+                if (response.data.length > 0) {
+                    $("#blogsTable").DataTable({
 
-                    pageLength: 10,
+                        pageLength: 10,
 
-                    ordering: false,
+                        ordering: false,
 
-                    info: true,
+                        info: true,
 
-                    searching: false,
+                        searching: false,
 
-                    lengthChange: false
-                });
+                        lengthChange: false
+                    });
+                }
             },
 
             error: function () {
 
+                if ($.fn.DataTable.isDataTable("#blogsTable")) {
+
+                    $("#blogsTable").DataTable().destroy();
+                }
+
                 $("#blogsTableBody").html(`
                     <tr>
                         <td
-                            colspan="8"
+                            colspan="7"
                             class="text-center text-danger py-4"
                         >
                             Failed to load blogs.
@@ -610,7 +604,7 @@ $(document).ready(function () {
     ) {
 
         selectElement.removeClass(
-            "border-success text-success border-danger text-danger"
+            "border-success text-success border-warning text-warning border-danger text-danger border-secondary text-secondary"
         );
 
         if (status === "ACTIVE") {
@@ -619,10 +613,22 @@ $(document).ready(function () {
                 "border-success text-success"
             );
 
-        } else {
+        } else if (status === "RESTRICTED") {
+
+            selectElement.addClass(
+                "border-warning text-warning"
+            );
+
+        } else if (status === "DELETED") {
 
             selectElement.addClass(
                 "border-danger text-danger"
+            );
+
+        } else {
+
+            selectElement.addClass(
+                "border-secondary text-secondary"
             );
         }
     }
@@ -643,18 +649,42 @@ $(document).ready(function () {
             selectedStatus =
                 $(this).val();
 
-            currentModalAction = "status";
+            if (selectedStatus === previousStatus) {
+                return;
+            }
 
-            $("#blogStatusConfirmModal .modal-title")
-                .text("Confirm Blog Status Change");
+            if (selectedStatus === "DELETED") {
 
-            $("#blogStatusConfirmModal .modal-body")
-                .text("Are you sure you want to update this blog status?");
+                deleteBlogId = selectedBlogId;
 
-            $("#confirmBlogStatusChangeBtn")
-                .text("Confirm")
-                .removeClass("btn-danger btn-dark")
-                .addClass("btn-dark");
+                currentModalAction = "delete";
+
+                $("#blogStatusConfirmModal .modal-title")
+                    .text("Confirm Blog Delete");
+
+                $("#blogStatusConfirmModal .modal-body")
+                    .text("Are you sure you want to delete this blog?");
+
+                $("#confirmBlogStatusChangeBtn")
+                    .text("Delete")
+                    .removeClass("btn-danger btn-dark")
+                    .addClass("btn-danger");
+
+            } else {
+
+                currentModalAction = "status";
+
+                $("#blogStatusConfirmModal .modal-title")
+                    .text("Confirm Blog Status Change");
+
+                $("#blogStatusConfirmModal .modal-body")
+                    .text("Are you sure you want to update this blog status?");
+
+                $("#confirmBlogStatusChangeBtn")
+                    .text("Confirm")
+                    .removeClass("btn-danger btn-dark")
+                    .addClass("btn-dark");
+            }
 
             blogStatusModal.show();
         }
@@ -750,6 +780,18 @@ $(document).ready(function () {
 
                         if (response.success) {
 
+                            if (currentSelectElement) {
+                                currentSelectElement.data(
+                                    "current-status",
+                                    selectedStatus
+                                );
+                                updateBlogStatusSelectStyle(
+                                    currentSelectElement,
+                                    selectedStatus
+                                );
+                            }
+                            previousStatus = selectedStatus;
+
                             blogStatusModal.hide();
 
                             loadBlogs(blogFilters);
@@ -771,31 +813,6 @@ $(document).ready(function () {
         }
     );
 
-    $(document).on(
-        "click",
-        ".delete-blog-btn",
-        function () {
-
-            deleteBlogId =
-                $(this).data("blog-id");
-
-            currentModalAction = "delete";
-
-            $("#blogStatusConfirmModal .modal-title")
-                .text("Confirm Blog Delete");
-
-            $("#blogStatusConfirmModal .modal-body")
-                .text("Are you sure you want to delete this blog?");
-
-            $("#confirmBlogStatusChangeBtn")
-                .text("Delete")
-                .removeClass("btn-danger btn-dark")
-                .addClass("btn-danger");
-
-            blogStatusModal.show();
-        }
-    );
-
     $("#blogStatusConfirmModal").on(
         "hidden.bs.modal",
         function () {
@@ -806,6 +823,14 @@ $(document).ready(function () {
             ) {
 
                 currentSelectElement.val(
+                    previousStatus
+                );
+            }
+
+            if (currentSelectElement) {
+
+                updateBlogStatusSelectStyle(
+                    currentSelectElement,
                     previousStatus
                 );
             }

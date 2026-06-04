@@ -1,6 +1,11 @@
 <?php
 $pageTitle = 'Admin Login | BlogSphere';
 $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+
+if (!empty($_SESSION['user']) && $_SESSION['user']['role'] === 'ADMIN') {
+    header('Location: ' . $baseUrl . '/admin/dashboard');
+    exit;
+}
 $apiBaseUrl = defined('BASE_API_URL') ? BASE_API_URL : '';
 
 ob_start();

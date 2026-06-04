@@ -107,6 +107,22 @@ $existingPermission = fetchOne(
 
 if ($enabled) {
 
+    // Enable permission: delete the restriction row if it exists
+    if ($existingPermission) {
+
+        execute(
+            "
+                DELETE FROM user_permissions
+                WHERE user_id = ?
+                AND permission_id = ?
+            ",
+            [$userId, $permissionId]
+        );
+    }
+
+} else {
+
+    // Disable permission: insert a restriction row if it doesn't exist
     if (!$existingPermission) {
 
         execute(
@@ -117,20 +133,6 @@ if ($enabled) {
                     permission_id
                 )
                 VALUES (?, ?)
-            ",
-            [$userId, $permissionId]
-        );
-    }
-
-} else {
-
-    if ($existingPermission) {
-
-        execute(
-            "
-                DELETE FROM user_permissions
-                WHERE user_id = ?
-                AND permission_id = ?
             ",
             [$userId, $permissionId]
         );

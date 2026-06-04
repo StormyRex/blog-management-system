@@ -1,6 +1,11 @@
 <?php 
 $title = 'Register | BlogSphere';
 $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+
+if (!empty($_SESSION['user'])) {
+    header('Location: ' . $baseUrl . '/');
+    exit;
+}
 $apiBaseUrl = defined('BASE_API_URL') ? BASE_API_URL : '';
 $errors = $errors ?? [];
 $old = $old ?? [];

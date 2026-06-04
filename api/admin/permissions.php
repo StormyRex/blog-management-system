@@ -22,20 +22,33 @@ if (
     ]);
 }
 
-$users = fetchAll(
-    "
-        SELECT
-            id,
-            name,
-            username,
-            email,
-            role,
-            status
-        FROM users
-        WHERE role <> 'ADMIN'
-        ORDER BY created_at DESC
-    "
-);
+$search = trim($_GET['search'] ?? '');
+
+$query = "
+    SELECT
+        id,
+        name,
+        username,
+        email,
+        role,
+        status
+    FROM users
+    WHERE role <> 'ADMIN'
+";
+
+$params = [];
+
+if ($search !== '') {
+    $query .= " AND (name LIKE ? OR username LIKE ? OR email LIKE ?)";
+    $searchTerm = '%' . $search . '%';
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+}
+
+$query .= " ORDER BY created_at DESC";
+
+$users = fetchAll($query, $params);
 
 $permissions = fetchAll(
     "

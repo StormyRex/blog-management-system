@@ -728,9 +728,9 @@ $isLoggedIn = !empty($_SESSION['user']);
 			display: inline-flex;
 			align-items: center;
 			gap: 6px;
-			padding: 6px 14px;
-			border-radius: 8px;
-			font-size: 0.8rem;
+			padding: 9px 16px;
+			border-radius: 10px;
+			font-size: 0.85rem;
 			font-weight: 600;
 			cursor: pointer;
 			transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
@@ -797,9 +797,124 @@ $isLoggedIn = !empty($_SESSION['user']);
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			background: rgba(255, 255, 255, 0.12);
+			background: #111111;
+			color: #ffffff;
+			border: 1px solid #111111;
+		}
+
+		/* ── Pagination ────────────────────────────────────── */
+		.pagination .page-link {
+			color: #111;
+			border-color: #e0e0e0;
+			background-color: #fff;
+			transition: all 0.15s ease;
+			font-size: 0.85rem;
+			font-weight: 500;
+			padding: 8px 14px;
+			border-radius: 8px;
+			margin: 0 2px;
+		}
+		.pagination .page-link:hover {
+			color: #111;
+			background-color: #f5f5f5;
+			border-color: #111;
+		}
+		.pagination .page-item.active .page-link {
+			background-color: #111;
+			border-color: #111;
 			color: #fff;
-			border: 1px solid rgba(255, 255, 255, 0.16);
+		}
+		.pagination .page-link:focus {
+			box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.1);
+		}
+
+		/* ── Standardized Modern Modals ─────────────────────── */
+		.modal-content {
+			border: none !important;
+			border-radius: 16px !important;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+			padding: 8px !important;
+		}
+
+		.modal-header {
+			border-bottom: none !important;
+			padding: 24px 24px 8px !important;
+		}
+
+		.modal-header .modal-title {
+			font-weight: 700 !important;
+			font-size: 1.25rem !important;
+			letter-spacing: -0.02em !important;
+		}
+
+		.modal-body {
+			padding: 8px 24px 20px !important;
+			color: #555 !important;
+		}
+
+		.modal-footer {
+			border-top: none !important;
+			padding: 12px 24px 24px !important;
+			gap: 8px !important;
+		}
+
+		.modal-footer .btn-primary,
+		.modal-footer .btn-secondary,
+		.modal-footer .btn-dark,
+		.modal-footer .btn-danger,
+		.modal-footer .btn-outline-dark,
+		.modal-footer .btn-outline {
+			padding: 9px 20px !important;
+			border-radius: 10px !important;
+			font-weight: 600 !important;
+			font-size: 0.875rem !important;
+			margin: 0 !important;
+		}
+
+		.modal-footer .btn-secondary {
+			background-color: #6c757d !important;
+			border: none !important;
+			color: #ffffff !important;
+		}
+
+		.modal-footer .btn-secondary:hover {
+			background-color: #5a6268 !important;
+		}
+
+		.modal-footer .btn-dark,
+		.modal-footer .btn-primary {
+			background-color: #111111 !important;
+			border: none !important;
+			color: #ffffff !important;
+		}
+
+		.modal-footer .btn-dark:hover,
+		.modal-footer .btn-primary:hover {
+			background-color: #333333 !important;
+		}
+
+		.modal-footer .btn-danger {
+			background-color: #dc3545 !important;
+			border: none !important;
+			color: #ffffff !important;
+		}
+
+		.modal-footer .btn-danger:hover {
+			background-color: #bb2d3b !important;
+		}
+
+		.modal-footer .btn-outline-dark,
+		.modal-footer .btn-outline {
+			background-color: transparent !important;
+			border: 1.5px solid #e0e0e0 !important;
+			color: #111111 !important;
+		}
+
+		.modal-footer .btn-outline-dark:hover,
+		.modal-footer .btn-outline:hover {
+			background-color: #f5f5f5 !important;
+			border-color: #111111 !important;
+			color: #111111 !important;
 		}
 	</style>
 	<?php if (!empty($pageStyles)) {

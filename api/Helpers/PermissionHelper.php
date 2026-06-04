@@ -64,7 +64,8 @@ function current_user_has_permission(
         ]
     );
 
-    return !empty($existingPermission);
+    // Default-allow model: If a restriction row does not exist, the user is allowed the permission.
+    return empty($existingPermission);
 }
 
 function require_permission(
