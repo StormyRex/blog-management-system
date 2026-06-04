@@ -1,37 +1,54 @@
 <?php
 
-use Shive\BlogManagementSystem\Controllers\AdminController;
-use Shive\BlogManagementSystem\Controllers\AuthController;
-use Shive\BlogManagementSystem\Controllers\BlogController;
-use Shive\BlogManagementSystem\Controllers\HomeController;
-use Shive\BlogManagementSystem\Controllers\UploadPageController;
-use Shive\BlogManagementSystem\Controllers\UserController;
-
 return [
 
-    '/' => [HomeController::class, 'index'],
+    '/' => 'pages/home.php',
 
-    '/explore' => [HomeController::class, 'explore'],
+    '/explore' => 'pages/explore.php',
 
-    '/contact-us' => [HomeController::class, 'contact'],
+    '/contact-us' => 'pages/contact.php',
 
+    '/auth/login' => 'pages/auth/login.php',
 
+    '/auth/admin-login' => 'pages/auth/admin-login.php',
 
-    '/login' => [AuthController::class, 'login'],
+    '/admin/login' => 'pages/auth/admin-login.php',
 
-    '/register' => [AuthController::class, 'register'],
+    '/admin/verify-otp' => 'pages/auth/verification.php',
 
-    '/user/dashboard' => [UserController::class, 'dashboard'],
+    '/admin/users' => 'pages/admin/users.php',
 
-    '/user/profile' => [UserController::class, 'profile'],
+    '/admin/blogs' => 'pages/admin/blogs.php',
 
-    '/blogs/my-blogs' => [BlogController::class, 'myBlogs'],
+    '/auth/register' => 'pages/auth/register.php',
 
-    '/blogs/create' => [BlogController::class, 'create'],
+    '/auth/verification' => 'pages/auth/verification.php',
 
-    '/admin/dashboard' => [AdminController::class, 'dashboard'],
+    '/auth/forgot-password' => 'pages/auth/forgot-password.php',
 
-    '/upload' => [UploadPageController::class, 'index'],
+    '/auth/reset-password' => 'pages/auth/reset-password.php',
 
-    '/logout' => [AuthController::class, 'logout'],
+    '/admin/permissions' => 'pages/admin/permissions.php',
+
+    '/login' => 'pages/auth/login.php',
+
+    '/register' => 'pages/auth/register.php',
+
+    '/user/profile' => 'pages/user/profile.php',
+
+    '/user/edit-profile' => 'pages/user/edit-profile.php',
+
+    '/blogs/my-blogs' => 'pages/blogs/my-blogs.php',
+
+    '/blogs/create' => 'pages/blogs/create.php',
+
+    '/blogs/edit' => 'pages/blogs/edit.php',
+
+    '/blogs/details' => 'pages/blogs/details.php',
+
+    '/admin/dashboard' => 'pages/admin/dashboard.php',
+
+    '/admin/contacts' => 'pages/admin/contacts.php',
+
+    '/logout' => 'pages/auth/logout.php',
 ];

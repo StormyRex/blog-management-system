@@ -2,97 +2,150 @@
 
 require 'vendor/autoload.php';
 
+/*
+|--------------------------------------------------------------------------
+| Session
+|--------------------------------------------------------------------------
+*/
+
 if (session_status() === PHP_SESSION_NONE) {
+
     session_start();
+
 }
+
+/*
+|--------------------------------------------------------------------------
+| Timezone
+|--------------------------------------------------------------------------
+*/
+
+date_default_timezone_set('Asia/Kolkata');
+
+/*
+|--------------------------------------------------------------------------
+| Base URLs
+|--------------------------------------------------------------------------
+*/
 
 if (!defined('BASE_URL')) {
-    define('BASE_URL', rtrim(dirname($_SERVER['SCRIPT_NAME']), '/'));
+
+    define(
+        'BASE_URL',
+        'http://localhost/blog-management-system'
+    );
+
 }
 
-$frontendRoutes = [
-    '/' => [
-        \Shive\BlogManagementSystem\Controllers\HomeController::class,
-        'index'
-    ],
-    '/explore' => [
-        \Shive\BlogManagementSystem\Controllers\HomeController::class,
-        'explore'
-    ],
-    '/contact-us' => [
-        \Shive\BlogManagementSystem\Controllers\HomeController::class,
-        'contact'
-    ],
-    '/login' => [
-        \Shive\BlogManagementSystem\Controllers\AuthController::class,
-        'login'
-    ],
-    '/register' => [
-        \Shive\BlogManagementSystem\Controllers\AuthController::class,
-        'register'
-    ],
-    '/logout' => [
-        \Shive\BlogManagementSystem\Controllers\AuthController::class,
-        'logout'
-    ],
-    '/user/profile' => [
-        \Shive\BlogManagementSystem\Controllers\UserController::class,
-        'profile'
-    ],
-    '/user/dashboard' => [
-        \Shive\BlogManagementSystem\Controllers\UserController::class,
-        'dashboard'
-    ],
-    '/blogs/my-blogs' => [
-        \Shive\BlogManagementSystem\Controllers\BlogController::class,
-        'myBlogs'
-    ],
-    '/blogs/create' => [
-        \Shive\BlogManagementSystem\Controllers\BlogController::class,
-        'create'
-    ],
-    '/admin/dashboard' => [
-        \Shive\BlogManagementSystem\Controllers\AdminController::class,
-        'dashboard'
-    ],
-    '/upload' => [
-        \Shive\BlogManagementSystem\Controllers\UploadPageController::class,
-        'index'
-    ]
-];
+if (!defined('BASE_API_URL')) {
 
-$apiRoutes = require 'api/Routes/ApiRouteConfig.php';
+    define(
+        'BASE_API_URL',
+        BASE_URL . '/api'
+    );
 
-$routes = array_merge($frontendRoutes, $apiRoutes);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Frontend Routes
+|--------------------------------------------------------------------------
+*/
+
+$frontendRoutes = require 'api/Config/FrontendRouteConfig.php';
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+
+$apiRoutes = require 'api/Config/ApiRouteConfig.php';
+
+/*
+|--------------------------------------------------------------------------
+| Merge Routes
+|--------------------------------------------------------------------------
+*/
+
+$routes = array_merge(
+    $frontendRoutes,
+    $apiRoutes
+);
+
+/*
+|--------------------------------------------------------------------------
+| Current URL
+|--------------------------------------------------------------------------
+*/
 
 $url = $_GET['url'] ?? '/';
 
 $url = '/' . trim($url, '/');
 
 if ($url === '//') {
+
     $url = '/';
+
 }
+
+/*
+|--------------------------------------------------------------------------
+| Route Match
+|--------------------------------------------------------------------------
+*/
 
 $routeTarget = $routes[$url] ?? null;
 
-if (is_array($routeTarget) && count($routeTarget) === 2) {
-    [$controllerClass, $method] = $routeTarget;
+/*
+|--------------------------------------------------------------------------
+| Route Found
+|--------------------------------------------------------------------------
+*/
 
-    if (class_exists($controllerClass)) {
-        $controller = new $controllerClass();
+if ($routeTarget) {
 
-        if (method_exists($controller, $method)) {
-            $controller->$method();
-            return;
+    /*
+    |--------------------------------------------------------------------------
+    | Direct PHP File Route
+    |--------------------------------------------------------------------------
+    */
+
+    if (is_string($routeTarget)) {
+
+        $filePath = __DIR__ . '/' . ltrim(
+            $routeTarget,
+            '/'
+        );
+
+        if (file_exists($filePath)) {
+
+            require $filePath;
+
+            exit;
+
         }
+
     }
+
 }
 
-$errorPath = __DIR__ . '/pages/errors/404.php';
+/*
+|--------------------------------------------------------------------------
+| 404
+|--------------------------------------------------------------------------
+*/
+
 http_response_code(404);
 
-if (is_file($errorPath)) {
+$errorPath = __DIR__ . '/pages/errors/404.php';
+
+if (file_exists($errorPath)) {
+
     require $errorPath;
+
 } else {
+
     echo '404 Not Found';
+
 }

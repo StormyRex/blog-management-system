@@ -1,246 +1,419 @@
 <?php
-$pageTitle = 'Home | BlogSphere';
+
+require_once __DIR__ . '/../api/Helpers/DatabaseHelper.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$pageTitle  = 'Home | BlogSphere';
 $activePage = 'home';
-$baseUrl = defined('BASE_URL') ? BASE_URL : '';
+$baseUrl    = defined('BASE_URL') ? BASE_URL : '';
+
+$currentUser   = $_SESSION['user'] ?? [];
+$currentUserId = (int) ($currentUser['id'] ?? 0);
+$isLoggedIn    = !empty($_SESSION['user']);
+
+$blogs = fetchAll(
+    "SELECT blogs.*, users.name, users.username,
+        (SELECT COUNT(*) FROM likes    WHERE blog_id = blogs.id) AS like_count,
+        (SELECT COUNT(*) FROM likes    WHERE blog_id = blogs.id AND user_id = ?) AS is_liked,
+        (SELECT COUNT(*) FROM shares   WHERE blog_id = blogs.id) AS share_count,
+        (SELECT COUNT(*) FROM comments WHERE blog_id = blogs.id) AS comment_count
+     FROM blogs
+     INNER JOIN users ON users.id = blogs.user_id
+     WHERE blogs.visibility = 'PUBLIC' AND blogs.status = 'ACTIVE'
+     ORDER BY blogs.created_at DESC LIMIT 3",
+    [$currentUserId]
+);
+
+$blogIds    = array_column($blogs, 'id');
+$thumbnails = getBlogThumbnailMap($blogIds);
+
+
 ob_start();
+
 ?>
-<section class="hero-card p-4 p-lg-5 mb-4 text-center">
-	<div class="section-title mb-2">Write. Share. Inspire.</div>
-	<h1 class="fw-bold mb-2">Welcome to BlogSphere</h1>
-	<p class="text-muted mb-4">
-		Write, share and explore blogs from creators around the world in this educational PHP MVC project.
-	</p>
-	<div class="row justify-content-center">
-		<div class="col-lg-8">
-			<div class="input-group">
-				<input
-					type="text"
-					class="form-control"
-					placeholder="Search here..."
-				>
-				<button class="btn btn-primary" type="button">Search</button>
-			</div>
-		</div>
-	</div>
+
+<!-- Hero -->
+<section class="hero-section">
+
+    <div class="hero-pill">✦ Write · Share · Inspire</div>
+
+    <h1 class="hero-title">
+        Your stories,<br>the world's stage.
+    </h1>
+
+    <p class="hero-sub">
+        Discover, write and share ideas with creators from around the world.
+    </p>
+
+    <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input
+            id="globalSearch"
+            type="text"
+            placeholder="Search blogs, creators…"
+            autocomplete="off"
+        >
+        <button class="search-btn" id="searchButton">Search</button>
+        <div id="globalSearchResults" class="search-dropdown"></div>
+    </div>
+
 </section>
 
-<section class="mb-5">
-	<div class="row">
-		<div class="col-lg-8">
-			<div class="d-flex justify-content-between align-items-center mb-3">
-				<h2 class="h5 mb-0">Latest Blogs</h2>
-				<a href="<?php echo $baseUrl; ?>/explore" class="text-decoration-none">Explore more</a>
-			</div>
+<!-- Main content -->
+<div class="row g-5 mt-1">
 
-			<div class="card mb-3">
-				<div class="card-body">
-					<div class="card-image-placeholder mb-3"></div>
-					<h5 class="card-title">How to Start Writing Consistently</h5>
-					<p class="card-text text-muted">
-						Simple routines and goals that help creators publish regularly without burnout.
-					</p>
-					<div class="meta-text mb-3">Creator: Shive · May 13, 2026</div>
-					<div class="d-flex flex-wrap gap-2">
-						<button class="btn btn-sm btn-outline-primary" type="button">View Details</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="like"
-							data-title="Building a Simple MVC Blog"
-						>
-							<span class="iconify" data-icon="mdi:heart-outline"></span>
-							<span class="action-count">12</span>
-						</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="comment"
-							data-title="Building a Simple MVC Blog"
-						>
-							<span class="iconify" data-icon="mdi:comment-outline"></span>
-							<span class="action-count">3</span>
-						</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="share"
-							data-title="Building a Simple MVC Blog"
-						>
-							<span class="iconify" data-icon="mdi:share-outline"></span>
-							<span class="action-count">1</span>
-						</button>
-					</div>
-				</div>
-			</div>
+    <!-- Blog feed -->
+    <div class="col-lg-8">
 
-			<div class="card mb-3">
-				<div class="card-body">
-					<div class="card-image-placeholder mb-3"></div>
-					<h5 class="card-title">Top Productivity Habits for Bloggers</h5>
-					<p class="card-text text-muted">
-						Time-saving techniques to plan, draft, and publish blogs with clarity.
-					</p>
-					<div class="meta-text mb-3">Creator: Amina · May 12, 2026</div>
-					<div class="d-flex flex-wrap gap-2">
-						<button class="btn btn-sm btn-outline-primary" type="button">View Details</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="like"
-							data-title="Managing Uploads in PHP"
-						>
-							<span class="iconify" data-icon="mdi:heart-outline"></span>
-							<span class="action-count">9</span>
-						</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="comment"
-							data-title="Managing Uploads in PHP"
-						>
-							<span class="iconify" data-icon="mdi:comment-outline"></span>
-							<span class="action-count">2</span>
-						</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="share"
-							data-title="Managing Uploads in PHP"
-						>
-							<span class="iconify" data-icon="mdi:share-outline"></span>
-							<span class="action-count">1</span>
-						</button>
-					</div>
-				</div>
-			</div>
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <div class="text-muted" style="font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;">Fresh picks</div>
+                <h2 style="font-size:1.35rem; font-weight:800; letter-spacing:-.02em; margin:0;">Latest Blogs</h2>
+            </div>
+            <a href="<?php echo $baseUrl; ?>/explore" class="btn-outline">
+                Explore all <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
 
-			<div class="card">
-				<div class="card-body">
-					<div class="card-image-placeholder mb-3"></div>
-					<h5 class="card-title">Designing a Better Reading Experience</h5>
-					<p class="card-text text-muted">
-						Improve readability with layout choices, spacing, and clean typography.
-					</p>
-					<div class="meta-text mb-3">Creator: Rohan · May 11, 2026</div>
-					<div class="d-flex flex-wrap gap-2">
-						<button class="btn btn-sm btn-outline-primary" type="button">View Details</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="like"
-							data-title="Routing Essentials for MVC"
-						>
-							<span class="iconify" data-icon="mdi:heart-outline"></span>
-							<span class="action-count">7</span>
-						</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="comment"
-							data-title="Routing Essentials for MVC"
-						>
-							<span class="iconify" data-icon="mdi:comment-outline"></span>
-							<span class="action-count">1</span>
-						</button>
-						<button
-							class="btn btn-sm btn-outline-secondary action-button"
-							type="button"
-							data-action="share"
-							data-title="Routing Essentials for MVC"
-						>
-							<span class="iconify" data-icon="mdi:share-outline"></span>
-							<span class="action-count">0</span>
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
+        <?php if (empty($blogs)) { ?>
 
-		<div class="col-lg-4">
-			<div class="card">
-				<div class="card-body">
-					<div class="section-title mb-2">Recently Viewed</div>
-					<div class="mb-3">
-						<div class="fw-semibold">Database Schema Walkthrough</div>
-						<div class="meta-text">2 hours ago</div>
-					</div>
-					<div class="mb-3">
-						<div class="fw-semibold">MVC Folder Structure</div>
-						<div class="meta-text">Yesterday</div>
-					</div>
-					<div>
-						<div class="fw-semibold">Validation Helper Basics</div>
-						<div class="meta-text">2 days ago</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-journal-text" style="font-size:2.5rem; display:block; margin-bottom:12px;"></i>
+                No blogs yet. Be the first!
+            </div>
+
+        <?php } ?>
+
+        <div class="d-flex flex-column gap-4">
+
+        <?php foreach ($blogs as $blog) {
+
+            $thumbnail  = $thumbnails[$blog['id']] ?? null;
+            $likeCount  = (int) ($blog['like_count']    ?? 0);
+            $isLiked    = (int) ($blog['is_liked']      ?? 0) > 0;
+            $shareCount = (int) ($blog['share_count']   ?? 0);
+            $cmtCount   = (int) ($blog['comment_count'] ?? 0);
+
+        ?>
+
+            <div class="blog-card">
+
+                <!-- Thumbnail -->
+                <div class="blog-card-thumb">
+                    <?php if ($thumbnail) { ?>
+
+                        <?php if ($thumbnail['type'] === 'IMAGE') { ?>
+                            <img src="<?php echo htmlspecialchars($thumbnail['url']); ?>" alt="">
+                        <?php } else { ?>
+                            <video preload="metadata" muted>
+                                <source src="<?php echo htmlspecialchars($thumbnail['url']); ?>">
+                            </video>
+                        <?php } ?>
+
+                    <?php } else { ?>
+                        <div class="no-media"><i class="bi bi-image"></i></div>
+                    <?php } ?>
+                </div>
+
+                <!-- Body -->
+                <div class="p-4 pb-2">
+
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="blog-badge"><?php echo htmlspecialchars($blog['category']); ?></span>
+                        <span class="text-muted" style="font-size:.8rem;">@<?php echo htmlspecialchars($blog['username']); ?></span>
+                    </div>
+
+                    <div class="blog-card-title mb-2"><?php echo htmlspecialchars($blog['title']); ?></div>
+
+                    <div class="blog-card-desc mb-3"><?php echo htmlspecialchars(substr($blog['description'], 0, 200)); ?>…</div>
+
+                    <div class="text-muted mb-0" style="font-size:.78rem;">
+                        <i class="bi bi-person"></i> <?php echo htmlspecialchars($blog['name']); ?>
+                        &nbsp;·&nbsp;
+                        <i class="bi bi-calendar3"></i> <?php echo date('M d, Y', strtotime($blog['created_at'])); ?>
+                    </div>
+
+                </div>
+
+                <!-- Actions -->
+                <div class="px-4 py-3 d-flex flex-wrap gap-2" style="border-top:1px solid #f0f0f0;">
+
+                    <button
+                        class="action-btn <?php echo $isLiked ? 'liked' : ''; ?>"
+                        data-action="like"
+                        data-requires-login="1"
+                        data-blog-id="<?php echo (int) $blog['id']; ?>"
+                        data-like-count="<?php echo $likeCount; ?>"
+                        data-liked="<?php echo $isLiked ? '1' : '0'; ?>"
+                        data-title="<?php echo htmlspecialchars($blog['title']); ?>"
+                    >
+                        <i class="bi <?php echo $isLiked ? 'bi-heart-fill' : 'bi-heart'; ?>"></i>
+                        <span class="like-count"><?php echo $likeCount; ?></span>
+                    </button>
+
+                    <button
+                        class="action-btn"
+                        data-action="comment"
+                        data-requires-login="1"
+                        data-blog-id="<?php echo (int) $blog['id']; ?>"
+                        data-title="<?php echo htmlspecialchars($blog['title']); ?>"
+                    >
+                        <i class="bi bi-chat"></i>
+                        <span id="cmt-<?php echo $blog['id']; ?>"><?php echo $cmtCount; ?></span>
+                    </button>
+
+                    <button
+                        class="action-btn"
+                        data-action="share"
+                        data-share-url="<?php echo $baseUrl; ?>/blogs/details?id=<?php echo (int) $blog['id']; ?>"
+                        data-blog-id="<?php echo (int) $blog['id']; ?>"
+                        data-share-count="<?php echo $shareCount; ?>"
+                        data-title="<?php echo htmlspecialchars($blog['title']); ?>"
+                    >
+                        <i class="bi bi-share"></i>
+                        <span class="share-count"><?php echo $shareCount; ?></span>
+                    </button>
+
+                    <a
+                        href="<?php echo $baseUrl; ?>/blogs/details?id=<?php echo (int) $blog['id']; ?>"
+                        class="action-btn view ms-auto"
+                    >
+                        Read <i class="bi bi-arrow-right"></i>
+                    </a>
+
+                </div>
+
+            </div>
+
+        <?php } ?>
+
+        </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+
+        <div class="sidebar-box">
+
+            <div class="sidebar-header">
+                <div class="text-muted" style="font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin-bottom:2px;">Activity</div>
+                <div class="sidebar-title">Recently Visited</div>
+            </div>
+
+            <div id="visitHistoryList">
+                <div class="p-4 text-center text-muted" style="font-size:.875rem;">
+                    <i class="bi bi-clock-history d-block mb-2" style="font-size:1.6rem; opacity:.35;"></i>
+                    No blogs visited yet
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- CTA banner (guests only) -->
+<?php if (!$isLoggedIn) { ?>
+
+    <div class="cta-block mt-5">
+        <h2 class="mb-2">Ready to start writing?</h2>
+        <p>Join BlogSphere and share your stories with thousands of readers.</p>
+        <a href="<?php echo $baseUrl; ?>/register" class="btn-cta">Create a free account →</a>
+    </div>
+
+<?php } ?>
+
+<?php require __DIR__ . '/../components/Comment.php'; ?>
+
 <?php
+
 $content = ob_get_clean();
-$pageScripts = <<<'SCRIPT'
+
+$baseUrlJs = json_encode($baseUrl);
+
+$pageScripts = ($pageScripts ?? '') . <<<'SCRIPT'
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-	var actionButtons = document.querySelectorAll('.action-button');
 
-	function updateCount(button, delta) {
-		var countElement = button.querySelector('.action-count');
-		if (!countElement) {
-			return;
-		}
-		var current = parseInt(countElement.textContent, 10) || 0;
-		var next = Math.max(current + delta, 0);
-		countElement.textContent = String(next);
-	}
+$(document).ready(function () {
 
-	function toggleAction(button) {
-		var isActive = button.classList.contains('is-active');
-		if (isActive) {
-			button.classList.remove('is-active');
-			button.classList.remove('btn-outline-primary');
-			button.classList.add('btn-outline-secondary');
-			updateCount(button, -1);
-		} else {
-			button.classList.add('is-active');
-			button.classList.remove('btn-outline-secondary');
-			button.classList.add('btn-outline-primary');
-			updateCount(button, 1);
-		}
-	}
+    var isLoggedIn = $('body').attr('data-is-logged-in') === '1';
+    var baseUrl    =
+SCRIPT
+. $baseUrlJs .
+<<<'SCRIPT'
+;
 
-	function handleShare(button) {
-		var title = button.getAttribute('data-title') || 'Blog post';
-		var shareData = {
-			title: title,
-			text: 'BlogSphere post',
-			url: window.location.href
-		};
+    // ── Recently visited ────────────────────────────────────────────────
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('blogVisitHistory') || '[]'); } catch (e) {}
 
-		if (navigator.share) {
-			navigator.share(shareData)
-				.then(function () {
-					updateCount(button, 1);
-				})
-				.catch(function () {
-				});
-		} else {
-			alert('Sharing is not supported in this browser.');
-		}
-	}
+    if (history.length) {
 
-	actionButtons.forEach(function (button) {
-		button.addEventListener('click', function () {
-			var action = button.getAttribute('data-action');
-			if (action === 'share') {
-				handleShare(button);
-				return;
-			}
-			toggleAction(button);
-		});
-	});
+        var $list = $('#visitHistoryList').empty();
+
+        history.slice(0, 6).forEach(function (item) {
+
+            $list.append(
+                $('<a>')
+                    .addClass('history-link')
+                    .attr('href', baseUrl + '/blogs/details?id=' + item.id)
+                    .html(
+                        '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + $('<span>').text(item.title).html() + '</div>' +
+                        '<div class="history-date">' + $('<span>').text(item.visitedAt).html() + '</div>'
+                    )
+            );
+
+        });
+    }
+
+    // ── Action buttons (like / comment / share) ─────────────────────────
+    $(document).on('click', '[data-action]', function () {
+
+        var $btn   = $(this);
+        var action = $btn.data('action');
+        var blogId = $btn.data('blog-id');
+        var title  = $btn.data('title') || '';
+
+        if ($btn.data('requires-login') && !isLoggedIn) {
+            window.BlogSphere && window.BlogSphere.showGuestModal();
+            return;
+        }
+
+        if (action === 'like') {
+
+            var liked    = $btn.data('liked') == '1';
+            var newLiked = !liked;
+            var count    = parseInt($btn.data('like-count'), 10) || 0;
+            var newCount = newLiked ? count + 1 : Math.max(0, count - 1);
+
+            $btn.toggleClass('liked', newLiked);
+            $btn.find('i').toggleClass('bi-heart-fill', newLiked).toggleClass('bi-heart', !newLiked);
+            $btn.find('.like-count').text(newCount);
+            $btn.data({ liked: newLiked ? '1' : '0', 'like-count': newCount });
+
+            $.post(baseUrl + '/api/blogs/like', { blog_id: blogId });
+        }
+
+        if (action === 'comment') {
+            if (window.BlogSphere && window.BlogSphere.openCommentModal) {
+                window.BlogSphere.openCommentModal(blogId, title);
+            }
+        }
+
+        if (action === 'share') {
+
+            var shareUrl = $btn.data('share-url');
+            var sc       = parseInt($btn.data('share-count'), 10) || 0;
+
+            $btn.find('.share-count').text(sc + 1);
+            $btn.data('share-count', sc + 1);
+
+            $.post(baseUrl + '/api/blogs/share', { blog_id: blogId });
+
+            if (navigator.share) {
+                navigator.share({ title: title, url: shareUrl }).catch(function () {});
+            } else {
+                navigator.clipboard.writeText(shareUrl).then(function () {
+                    var orig = $btn.html();
+                    $btn.html('<i class="bi bi-check2"></i> Copied!');
+                    setTimeout(function () { $btn.html(orig); }, 1800);
+                });
+            }
+        }
+    });
+
+    // Comment count callback (called by Comment.php)
+    window.updateBlogCommentCount = function (blogId, count) {
+        $('#cmt-' + blogId).text(parseInt(count, 10) || 0);
+    };
+
+    // ── Search ──────────────────────────────────────────────────────────
+    var searchTimer = null;
+    var $inp        = $('#globalSearch');
+    var $res        = $('#globalSearchResults');
+
+    $inp.on('input', function () {
+
+        var q = $(this).val().trim();
+
+        clearTimeout(searchTimer);
+
+        if (q.length < 2) {
+            $res.hide().empty();
+            return;
+        }
+
+        searchTimer = setTimeout(function () {
+
+            $.get(baseUrl + '/api/search', { q: q }, function (data) {
+
+                $res.empty();
+
+                var blogs = (data.success && data.data && data.data.blogs)
+                    ? data.data.blogs.slice(0, 5)
+                    : [];
+
+                if (!blogs.length) {
+                    $res.html('<div style="padding:14px;text-align:center;color:#aaa;font-size:.88rem;">No results found</div>').show();
+                    return;
+                }
+
+                blogs.forEach(function (b) {
+
+                    var thumbHtml = (b.thumbnail && b.thumbnail.url && b.thumbnail.type === 'IMAGE')
+                        ? '<img src="' + b.thumbnail.url + '" style="width:100%;height:100%;object-fit:cover;">'
+                        : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#ccc;"><i class="bi bi-image"></i></div>';
+
+                    $res.append(
+                        $('<a>')
+                            .addClass('search-result-item')
+                            .attr('href', baseUrl + '/blogs/details?id=' + b.id)
+                            .append($('<div>').addClass('search-thumb').html(thumbHtml))
+                            .append(
+                                $('<div>').append(
+                                    $('<div>').addClass('search-result-title').text(b.title || 'Untitled'),
+                                    $('<div>').addClass('search-result-meta').text('By ' + (b.name || '—') + ' · @' + (b.username || '—'))
+                                )
+                            )
+                    );
+                });
+
+                $res.show();
+
+            }, 'json');
+
+        }, 280);
+    });
+
+    $('#searchButton').on('click', function () {
+        var q = $inp.val().trim();
+        if (q) {
+            window.location.href = baseUrl + '/explore?q=' + encodeURIComponent(q);
+        }
+    });
+
+    $inp.on('keydown', function (e) {
+        if (e.key === 'Enter') {
+            $('#searchButton').trigger('click');
+        }
+    });
+
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('#globalSearch, #globalSearchResults').length) {
+            $res.hide();
+        }
+    });
+
 });
+
 </script>
 SCRIPT;
+
 require __DIR__ . '/../layouts/MainLayout.php';
+
 ?>

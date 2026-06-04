@@ -1,3 +1,0 @@
-<?php
-// User layout placeholder
-

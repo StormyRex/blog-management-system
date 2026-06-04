@@ -1,65 +1,202 @@
 <?php
 $pageTitle = 'Login | BlogSphere';
-$errors = $errors ?? [];
-$old = $old ?? ['identity' => ''];
 $baseUrl = defined('BASE_URL') ? BASE_URL : '';
+$apiBaseUrl = defined('BASE_API_URL') ? BASE_API_URL : '';
 ob_start();
 ?>
-<div class="text-center mb-3">
+<div class="text-center mb-4">	
 	<div class="section-title">Authentication</div>
-	<h1 class="h5 mt-2">Login</h1>
+	<h1 class="h4 mt-2" style="font-weight: 700; letter-spacing: -0.02em;">Login</h1>
 </div>
 
-<?php if (!empty($errors['credentials'])) { ?>
-	<div class="alert alert-danger">
-		<?php echo htmlspecialchars($errors['credentials'], ENT_QUOTES, 'UTF-8'); ?>
-	</div>
-<?php } ?>
+<div
+    id="loginAlert"
+    class="alert alert-danger d-none"
+    role="alert"
+></div>
 
-<?php if (!empty($errors['general'])) { ?>
-	<div class="alert alert-danger">
-		<?php echo htmlspecialchars($errors['general'], ENT_QUOTES, 'UTF-8'); ?>
-	</div>
-<?php } ?>
 
-<form method="POST" action="<?php echo $baseUrl; ?>/login">
+<form id="loginForm" method="POST" action="<?php echo $apiBaseUrl; ?>/auth/login" novalidate>
 	<div class="mb-3">
-		<label class="form-label" for="loginIdentity">Email or Username</label>
+		<label class="form-label" for="identity">Email or Username</label>
 		<input
 			type="text"
-			class="form-control <?php echo !empty($errors['identity']) ? 'is-invalid' : ''; ?>"
-			id="loginIdentity"
+			class="form-control"
+			id="identity"
 			name="identity"
 			placeholder="you@example.com"
-			value="<?php echo htmlspecialchars($old['identity'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
 		>
-		<?php if (!empty($errors['identity'])) { ?>
-			<div class="invalid-feedback">
-				<?php echo htmlspecialchars($errors['identity'], ENT_QUOTES, 'UTF-8'); ?>
-			</div>
-		<?php } ?>
 	</div>
 	<div class="mb-3">
-		<label class="form-label" for="loginPassword">Password</label>
-		<input
-			type="password"
-			class="form-control <?php echo !empty($errors['password']) ? 'is-invalid' : ''; ?>"
-			id="loginPassword"
-			name="password"
-			placeholder="Enter your password"
-		>
-		<?php if (!empty($errors['password'])) { ?>
-			<div class="invalid-feedback">
-				<?php echo htmlspecialchars($errors['password'], ENT_QUOTES, 'UTF-8'); ?>
-			</div>
-		<?php } ?>
+		<label class="form-label" for="password">Password</label>
+        <div class="input-group password-field">
+			<input
+				type="password"
+				class="form-control"
+				id="password"
+				name="password"
+				placeholder="Enter your password"
+			>
+			<button
+				type="button"
+                class="btn toggle-password"
+                aria-label="Show password"
+                title="Show password"
+				data-target="#password"
+			>
+                <i class="bi bi-eye"></i>
+			</button>
+		</div>
 	</div>
-	<button class="btn btn-primary w-100" type="submit">Login</button>
+    <div class="text-end mb-3">
+		<a href="<?php echo $baseUrl; ?>/auth/forgot-password" class="small text-muted text-decoration-none">
+			Forgot Password?
+		</a>
+	</div>
+	<button class="btn btn-dark w-100 py-2" type="submit">Login</button>
 </form>
-<div class="text-center mt-3">
-	<span class="text-muted">New here?</span>
-	<a href="<?php echo $baseUrl; ?>/register" class="text-decoration-none">Create an account</a>
+
+<div class="text-center mt-4">
+	<span class="text-muted small">New here?</span>
+	<a href="<?php echo $baseUrl; ?>/auth/register" class="text-primary small text-decoration-none ms-1">Create an account</a>
 </div>
+
+<div class="text-center mt-3">
+    <a href="<?php echo $baseUrl; ?>/" class="text-muted small">Continue as Guest</a>
+</div>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<script>
+
+$(document).ready(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Toggle Password
+    |--------------------------------------------------------------------------
+    */
+
+    $(".toggle-password").on("click", function () {
+        let target = $(this).data("target");
+        let input = $(target);
+        let icon = $(this).find("i");
+        if (input.attr("type") === "password") {
+            input.attr("type", "text");
+            icon.removeClass("bi-eye").addClass("bi-eye-slash");
+            $(this).attr("aria-label", "Hide password").attr("title", "Hide password");
+        } else {
+            input.attr("type", "password");
+            icon.removeClass("bi-eye-slash").addClass("bi-eye");
+            $(this).attr("aria-label", "Show password").attr("title", "Show password");
+        }
+    });
+
+    $("#loginForm").on("submit", function (e) {
+
+        e.preventDefault();
+
+        var form = $(this);
+        var identity = $("#identity").val();
+        var password = $("#password").val();
+        var errors = {};
+
+        $("#loginAlert")
+            .addClass("d-none")
+            .text("");
+
+        // Clear previous errors
+        $(".is-invalid").removeClass("is-invalid");
+        $(".invalid-feedback").remove();
+
+        // Simple validation
+        if (!identity) {
+            errors['identity'] = 'Email or username is required';
+        }
+
+        if (!password) {
+            errors['password'] = 'Password is required';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            Object.keys(errors).forEach(function (field) {
+                var input = $("#" + field);
+                input.addClass("is-invalid");
+                if (input.closest(".password-field").length) {
+                    input.closest(".password-field").after('<div class="invalid-feedback d-block">' + errors[field] + '</div>');
+                } else {
+                    input.after('<div class="invalid-feedback d-block">' + errors[field] + '</div>');
+                }
+            });
+            return;
+        }
+
+        // AJAX Request
+        $.ajax({
+            url: form.attr("action"),
+            type: "POST",
+            data: form.serialize(),
+            dataType: "json",
+
+            beforeSend: function () {
+                $("button[type='submit']").prop("disabled", true).text("Processing...");
+            },
+
+            success: function (response) {
+                if (response.success) {
+                    window.location.assign("<?php echo $baseUrl; ?>/");
+                } else if (response.message) {
+                    $("#loginAlert")
+                        .removeClass("d-none")
+                        .text(response.message);
+                }
+            },
+
+            error: function (xhr) {
+                if (xhr.status === 422 || xhr.status === 401) {
+                    var response = xhr.responseJSON;
+                    var hasFieldErrors =
+                        response &&
+                        response.errors &&
+                        Object.keys(response.errors).length > 0;
+
+                    if (hasFieldErrors) {
+                        Object.keys(response.errors).forEach(function (field) {
+                            var input = $("#" + field);
+                            input.addClass("is-invalid");
+                            if (input.closest(".password-field").length) {
+                                input.closest(".password-field").after('<div class="invalid-feedback d-block">' + response.errors[field] + '</div>');
+                            } else {
+                                input.after('<div class="invalid-feedback d-block">' + response.errors[field] + '</div>');
+                            }
+                        });
+                    } else if (response && response.message) {
+                        $("#loginAlert")
+                            .removeClass("d-none")
+                            .text(response.message);
+                    } else {
+                        $("#loginAlert")
+                            .removeClass("d-none")
+                            .text("Login failed. Please try again.");
+                    }
+                } else {
+                    $("#loginAlert")
+                        .removeClass("d-none")
+                        .text("Something went wrong. Please try again.");
+                }
+            },
+
+            complete: function () {
+                $("button[type='submit']").prop("disabled", false).text("Login");
+            }
+        });
+    });
+
+});
+
+</script>
+
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../../layouts/AuthLayout.php';

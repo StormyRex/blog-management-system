@@ -1,3 +1,0 @@
-<?php
-// Loader component placeholder
-

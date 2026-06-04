@@ -1,3 +1,0 @@
-<?php
-// Modal component placeholder
-
