@@ -29,12 +29,17 @@ date_default_timezone_set('Asia/Kolkata');
 */
 
 if (!defined('BASE_URL')) {
-
-    define(
-        'BASE_URL',
-        'http://localhost/blog-management-system'
+    $isLocal = isset($_SERVER['HTTP_HOST']) && (
+        in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1'], true) ||
+        str_starts_with($_SERVER['HTTP_HOST'], '192.168.')
     );
 
+    if ($isLocal) {
+        define('BASE_URL', 'http://localhost/blog-management-system');
+    } else {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        define('BASE_URL', $protocol . '://' . $_SERVER['HTTP_HOST']);
+    }
 }
 
 if (!defined('BASE_API_URL')) {

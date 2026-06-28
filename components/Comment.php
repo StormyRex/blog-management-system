@@ -2,14 +2,26 @@
 
 $baseUrl = defined('BASE_URL') ? BASE_URL : '';
 $baseUrlJs = json_encode($baseUrl);
+$currentUser = $_SESSION['user'] ?? null;
+if ($currentUser && empty($currentUser['avatar'])) {
+    require_once __DIR__ . '/../api/Helpers/DatabaseHelper.php';
+    $dbUser = fetchOne("SELECT avatar FROM users WHERE id = ? LIMIT 1", [$currentUser['id']]);
+    if ($dbUser && !empty($dbUser['avatar'])) {
+        $currentUser['avatar'] = $dbUser['avatar'];
+        $_SESSION['user']['avatar'] = $dbUser['avatar'];
+    }
+}
+$currentUserJs = json_encode($currentUser);
 
 $pageScripts = ($pageScripts ?? '') . '
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 $(document).ready(function () {
     const baseUrl = ' . $baseUrlJs . ';
+    const currentUser = ' . $currentUserJs . ';
 
-    function renderCommentAvatar(user) {
+    function renderCommentAvatar(user, size) {
+        size = size || 42;
         var avatar = user && user.avatar ? user.avatar : "";
         var name = user && user.name ? user.name : "User";
         var initial = name.charAt(0).toUpperCase();
@@ -19,12 +31,33 @@ $(document).ready(function () {
                 .attr("src", avatar)
                 .attr("alt", name)
                 .addClass("rounded-circle flex-shrink-0")
-                .css({ width: "44px", height: "44px", objectFit: "cover" });
+                .css({ width: size + "px", height: size + "px", objectFit: "cover" });
         }
 
+        var colorPalettes = [
+            { bg: "#f1f3f5", text: "#495057" }, // Slate
+            { bg: "#edf2ff", text: "#3b5bdb" }, // Muted Blue
+            { bg: "#f3f0ff", text: "#845ef7" }, // Muted Purple
+            { bg: "#e6fcf5", text: "#0ca678" }, // Muted Teal
+            { bg: "#fff0f6", text: "#d6336c" }  // Muted Pink
+        ];
+        
+        var charSum = 0;
+        for (var i = 0; i < name.length; i++) {
+            charSum += name.charCodeAt(i);
+        }
+        var palette = colorPalettes[charSum % colorPalettes.length];
+
         return $("<div>")
-            .addClass("rounded-circle bg-dark text-white d-flex align-items-center justify-content-center flex-shrink-0 fw-semibold")
-            .css({ width: "44px", height: "44px" })
+            .addClass("rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold")
+            .css({ 
+                width: size + "px", 
+                height: size + "px", 
+                backgroundColor: palette.bg,
+                color: palette.text,
+                fontSize: Math.floor(size * 0.44) + "px",
+                border: "1px solid rgba(0,0,0,0.06)"
+            })
             .text(initial);
     }
 
@@ -123,19 +156,18 @@ $(document).ready(function () {
     function renderCommentNode(comment, blogId, level) {
         level = level || 0;
         var user = comment.user || {};
-        var indent = Math.min(level, 4) * 40;
+        var isReply = level > 0;
+        var avatarSize = isReply ? 34 : 42;
 
         var $item = $("<div>")
-            .addClass("d-flex gap-3 py-3 align-items-start")
-            .css({ marginLeft: indent + "px" });
+            .addClass("comment-node d-flex flex-column mb-3")
+            .attr("data-id", comment.id);
 
-        if (level > 0) {
-            $item.addClass("border-start ps-3");
-        }
+        var $mainRow = $("<div>").addClass("d-flex gap-3 align-items-start");
 
-        $item.append(
+        $mainRow.append(
             createProfileLink(user, "flex-shrink-0 text-decoration-none", function () {
-                var $avatar = renderCommentAvatar(user);
+                var $avatar = renderCommentAvatar(user, avatarSize);
                 if ($avatar.is("img")) {
                     $avatar.attr("loading", "lazy");
                 }
@@ -144,37 +176,67 @@ $(document).ready(function () {
         );
 
         var $content = $("<div>").addClass("flex-grow-1 min-w-0");
-        var $title = $("<div>").addClass("d-flex flex-column gap-0 mb-1");
-        var $name = createProfileLink(user, "fw-semibold text-body text-decoration-none").text(user.name || "User");
-        var $metaLine = $("<div>").addClass("d-flex flex-wrap align-items-center gap-1 text-muted small");
-
-        $metaLine.append(
-            createProfileLink(user, "text-muted text-decoration-none").text("@" + (user.username || "unknown")),
-            $("<span>").html("&bull;"),
-            $("<span>").text(formatCommentTimestamp(comment.created_at))
-        );
+        var $title = $("<div>").addClass("d-flex align-items-baseline gap-2 mb-1");
+        
+        var $name = createProfileLink(user, "fw-bold text-dark text-decoration-none")
+            .css({ fontSize: isReply ? "0.9rem" : "0.95rem" })
+            .text(user.name || "User");
+            
+        var $metaLine = $("<span>").addClass("text-muted small");
+        $metaLine.text("@" + (user.username || "unknown") + " • " + formatCommentTimestamp(comment.created_at));
 
         $title.append($name, $metaLine);
         $content.append($title);
-        $content.append($("<div>").addClass("text-body mb-2").text(comment.comment || ""));
+        
+        $content.append(
+            $("<div>")
+                .addClass("text-dark mb-2")
+                .css({ 
+                    fontSize: isReply ? "0.88rem" : "0.92rem", 
+                    lineHeight: "1.5",
+                    wordBreak: "break-word"
+                })
+                .text(comment.comment || "")
+        );
 
-        var $actions = $("<div>").addClass("mt-1 d-flex align-items-center gap-3");
-        $actions.append(renderCommentReplyButton(comment));
+        var $actions = $("<div>").addClass("d-flex align-items-center gap-3");
+        
+        var $replyBtn = renderCommentReplyButton(comment)
+            .removeClass("btn btn-sm btn-link text-muted p-0 text-decoration-none")
+            .addClass("comment-action-link");
+        $actions.append($replyBtn);
 
         var $deleteButton = renderCommentDeleteButton(comment, blogId);
         if ($deleteButton) {
+            $deleteButton
+                .removeClass("btn btn-sm btn-link text-muted p-0 text-decoration-none")
+                .addClass("comment-action-link delete-link");
             $actions.append($deleteButton);
         }
 
         $content.append($actions);
-        $item.append($content);
-        $("#commentsList").append($item);
+        $mainRow.append($content);
+        $item.append($mainRow);
 
         if (comment.replies && comment.replies.length) {
+            var $repliesContainer = $("<div>")
+                .addClass("replies-container")
+                .css({
+                    borderLeft: "2px solid #eaecf0",
+                    marginLeft: Math.floor(avatarSize / 2) + "px",
+                    paddingLeft: "20px",
+                    marginTop: "8px"
+                });
+
             comment.replies.forEach(function (reply) {
-                renderCommentNode(reply, blogId, level + 1);
+                var $replyNode = renderCommentNode(reply, blogId, level + 1);
+                $repliesContainer.append($replyNode);
             });
+
+            $item.append($repliesContainer);
         }
+
+        return $item;
     }
 
     function renderComments(comments) {
@@ -188,7 +250,8 @@ $(document).ready(function () {
 
         var blogId = $("#commentsModal").attr("data-blog-id") || $("#commentsModal").data("blog-id");
         comments.forEach(function (comment) {
-            renderCommentNode(comment, blogId, 0);
+            var $node = renderCommentNode(comment, blogId, 0);
+            $commentsList.append($node);
         });
     }
 
@@ -402,13 +465,26 @@ $(document).ready(function () {
         var blogId = $button.data("blog-id") || $commentsModal.attr("data-blog-id") || $commentsModal.data("blog-id");
 
         if (!commentId || !blogId) return;
-        if (!window.confirm("Delete this comment?")) return;
 
-        $button.prop("disabled", true);
+        var $confirmModal = $("#deleteCommentConfirmModal");
+        $confirmModal.data("comment-id", commentId).data("blog-id", blogId);
+        bootstrap.Modal.getOrCreateInstance($confirmModal[0]).show();
+    });
+
+    $(document).on("click", "#confirmDeleteCommentButton", function () {
+        var $confirmModal = $("#deleteCommentConfirmModal");
+        var commentId = $confirmModal.data("comment-id");
+        var blogId = $confirmModal.data("blog-id");
+        var $confirmBtn = $(this);
+
+        if (!commentId || !blogId) return;
+
+        $confirmBtn.prop("disabled", true).text("Deleting...");
         hideCommentsModalAlert();
 
         deleteComment(commentId, blogId).always(function () {
-            $button.prop("disabled", false);
+            $confirmBtn.prop("disabled", false).text("Delete");
+            bootstrap.Modal.getOrCreateInstance($confirmModal[0]).hide();
         });
     });
 
@@ -420,14 +496,6 @@ $(document).ready(function () {
 
         setReplyState(commentId, username);
         $commentInput.val("@" + username + " ").focus();
-    });
-
-    $commentsModal.on("mouseenter", ".comment-delete-button", function () {
-        $(this).removeClass("text-muted").addClass("text-danger");
-    });
-
-    $commentsModal.on("mouseleave", ".comment-delete-button", function () {
-        $(this).removeClass("text-danger").addClass("text-muted");
     });
 
     $commentsModal.on("click", "#cancelReplyButton", function () {
@@ -626,6 +694,12 @@ $(document).ready(function () {
             return;
         }
     });
+
+    var $footerAvatarContainer = $("#currentUserCommentAvatar");
+    if ($footerAvatarContainer.length) {
+        var $footerAvatar = renderCommentAvatar(currentUser, 38);
+        $footerAvatarContainer.empty().append($footerAvatar);
+    }
 });
 </script>
 ';
@@ -675,7 +749,7 @@ $(document).ready(function () {
 
                 <div id="commentsModalAlert" class="alert d-none mb-3" role="alert"></div>
 
-                <div id="commentsList" class="border rounded-3 p-3 bg-light flex-grow-1" style="min-height: 220px; overflow-y: auto;">
+                <div id="commentsList" class="flex-grow-1 py-1" style="min-height: 250px; overflow-y: auto; max-height: 460px;">
 
                     <div class="text-muted">
                         Loading comments...
@@ -685,46 +759,46 @@ $(document).ready(function () {
 
             </div>
 
-            <div class="modal-footer d-flex flex-column align-items-stretch gap-3">
-            <div
-                id="replyingToContainer"
-                class="d-none small text-muted"
-            >
-                Replying to
-                <span id="replyingToUsername"></span>
-
-                <button
-                    type="button"
-                    class="btn btn-link btn-sm p-0 ms-2"
-                    id="cancelReplyButton"
-                >
-                    Cancel
-                </button>
-            </div>
-                <div class="d-flex flex-column flex-md-row gap-3 align-items-md-end w-100">
-
-                    <div class="flex-grow-1">
-
-                        <textarea
-                            id="commentInput"
-                            class="form-control"
-                            rows="2"
-                            style="min-height: 72px; max-height: 80px;"
-                            placeholder="Write a comment..."
-                        ></textarea>
-
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <div class="d-flex gap-3 align-items-start w-100">
+                    <!-- Active user avatar -->
+                    <div id="currentUserCommentAvatar" class="flex-shrink-0 mt-1">
+                        <!-- Populated dynamically by JS -->
                     </div>
-
-                    <button
-                        type="button"
-                        class="btn btn-primary flex-shrink-0"
-                        id="postCommentButton"
-                    >
-                        Post
-                    </button>
-
+                    
+                    <!-- Input Area -->
+                    <div class="flex-grow-1 min-w-0 d-flex flex-column gap-2">
+                        <!-- Replying to banner -->
+                        <div id="replyingToContainer" class="d-none alert alert-light border py-2 px-3 mb-0 rounded-3 d-flex align-items-center justify-content-between small text-muted">
+                            <div>
+                                Replying to <span id="replyingToUsername" class="fw-bold text-dark"></span>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none fw-semibold" id="cancelReplyButton">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="d-flex flex-column flex-md-row gap-3 align-items-md-end">
+                            <div class="flex-grow-1">
+                                <textarea
+                                    id="commentInput"
+                                    class="form-control border-0 bg-light py-2.5 px-3"
+                                    rows="2"
+                                    style="min-height: 52px; max-height: 120px; border-radius: 12px; font-size: 0.92rem; box-shadow: none; resize: none;"
+                                    placeholder="Write a comment..."
+                                ></textarea>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-dark px-4 fw-semibold rounded-3 text-white flex-shrink-0"
+                                id="postCommentButton"
+                                style="height: 42px;"
+                            >
+                                Post
+                            </button>
+                        </div>
+                    </div>
                 </div>
-
             </div>
 
         </div>
@@ -732,3 +806,74 @@ $(document).ready(function () {
     </div>
 
 </div>
+
+<!-- Delete Comment Confirmation Modal -->
+<div class="modal fade" id="deleteCommentConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg rounded-4" style="padding: 0 !important;">
+            <div class="modal-header border-0 pb-0 pt-4 px-4" style="padding: 24px 24px 8px !important;">
+                <h5 class="modal-title fw-bold" style="font-size: 1.20rem; letter-spacing: -0.01em; font-weight: 700 !important;">Delete comment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3 px-4" style="padding: 8px 24px 20px !important;">
+                <p class="mb-0 text-muted" style="font-size: 0.92rem; color: #555 !important;">Are you sure you want to delete this comment? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex justify-content-end gap-2" style="padding: 12px 24px 24px !important;">
+                <button type="button" class="btn btn-outline-dark px-3 py-2 fw-semibold" data-bs-dismiss="modal" style="font-size: 0.85rem; border-radius: 10px; padding: 9px 20px !important; background-color: transparent !important; border: 1.5px solid #e0e0e0 !important; color: #111111 !important;">Cancel</button>
+                <button type="button" class="btn btn-danger px-3 py-2 fw-semibold" id="confirmDeleteCommentButton" style="font-size: 0.85rem; border-radius: 10px; padding: 9px 20px !important; background-color: #dc3545 !important; border: none !important; color: #ffffff !important;">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom styling for modern premium comments modal */
+#commentsModal .modal-content {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12) !important;
+}
+#commentsModal .modal-header {
+    border-bottom: 1px solid #f0f2f5 !important;
+}
+#commentsModal .modal-body {
+    padding-top: 20px !important;
+}
+#commentsList::-webkit-scrollbar {
+    width: 6px;
+}
+#commentsList::-webkit-scrollbar-track {
+    background: transparent;
+}
+#commentsList::-webkit-scrollbar-thumb {
+    background: #e4e6eb;
+    border-radius: 10px;
+}
+#commentsList::-webkit-scrollbar-thumb:hover {
+    background: #ccd0d5;
+}
+.comment-action-link {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #65676b;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.comment-action-link:hover {
+    color: #050505;
+}
+.comment-action-link.delete-link {
+    color: #dc3545;
+}
+.comment-action-link.delete-link:hover {
+    color: #a71d2a;
+}
+#commentInput:focus {
+    background-color: #f0f2f5 !important;
+    box-shadow: 0 0 0 2px #000 !important;
+}
+</style>

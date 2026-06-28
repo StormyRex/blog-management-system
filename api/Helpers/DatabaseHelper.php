@@ -67,7 +67,11 @@ function fetchOne(
         return null;
     }
 
-    return mysqli_fetch_assoc($result) ?: null;
+    $row = mysqli_fetch_assoc($result) ?: null;
+    if ($row) {
+        $row = cleanRowUrls($row);
+    }
+    return $row;
 }
 
 /*
@@ -124,10 +128,17 @@ function fetchAll(
         return [];
     }
 
-    return mysqli_fetch_all(
+    $rows = mysqli_fetch_all(
         $result,
         MYSQLI_ASSOC
     );
+
+    foreach ($rows as &$row) {
+        $row = cleanRowUrls($row);
+    }
+    unset($row);
+
+    return $rows;
 }
 
 /*
@@ -419,4 +430,27 @@ function deleteRecord(
         $query,
         [$id]
     );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Clean Row URLs (Environment Helper)
+|--------------------------------------------------------------------------
+*/
+
+function cleanRowUrls(array $row): array {
+    $isLocal = !isset($_SERVER['HTTP_HOST']) || (
+        in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1'], true) ||
+        str_starts_with($_SERVER['HTTP_HOST'], '192.168.')
+    );
+
+    if (!$isLocal) {
+        if (isset($row['url']) && str_starts_with($row['url'], '/blog-management-system/')) {
+            $row['url'] = substr($row['url'], strlen('/blog-management-system'));
+        }
+        if (isset($row['avatar']) && str_starts_with($row['avatar'], '/blog-management-system/')) {
+            $row['avatar'] = substr($row['avatar'], strlen('/blog-management-system'));
+        }
+    }
+    return $row;
 }

@@ -38,7 +38,7 @@ ob_start();
 <!-- Hero -->
 <section class="hero-section">
 
-    <div class="hero-pill">✦ Write · Share · Inspire</div>
+    <div class="hero-pill">Write · Share · Inspire</div>
 
     <h1 class="hero-title">
         Your stories,<br>the world's stage.
@@ -306,23 +306,34 @@ SCRIPT
         }
 
         if (action === 'share') {
-
             var shareUrl = $btn.data('share-url');
-            var sc       = parseInt($btn.data('share-count'), 10) || 0;
-
-            $btn.find('.share-count').text(sc + 1);
-            $btn.data('share-count', sc + 1);
-
-            $.post(baseUrl + '/api/blogs/share', { blogId: blogId });
 
             if (navigator.share) {
-                navigator.share({ title: title, url: shareUrl }).catch(function () {});
+                navigator.share({ title: title, url: shareUrl })
+                    .then(function () {
+                        var sc = parseInt($btn.data('share-count'), 10) || 0;
+                        $btn.find('.share-count').text(sc + 1);
+                        $btn.data('share-count', sc + 1);
+                        $.post(baseUrl + '/api/blogs/share', { blogId: blogId });
+                    })
+                    .catch(function () {
+                        // User canceled or share failed; do nothing
+                    });
             } else {
-                navigator.clipboard.writeText(shareUrl).then(function () {
-                    var orig = $btn.html();
-                    $btn.html('<i class="bi bi-check2"></i> Copied!');
-                    setTimeout(function () { $btn.html(orig); }, 1800);
-                });
+                navigator.clipboard.writeText(shareUrl)
+                    .then(function () {
+                        var orig = $btn.html();
+                        $btn.html('<i class="bi bi-check2"></i> Copied!');
+                        setTimeout(function () { $btn.html(orig); }, 1800);
+
+                        var sc = parseInt($btn.data('share-count'), 10) || 0;
+                        $btn.find('.share-count').text(sc + 1);
+                        $btn.data('share-count', sc + 1);
+                        $.post(baseUrl + '/api/blogs/share', { blogId: blogId });
+                    })
+                    .catch(function () {
+                        // Copy failed
+                    });
             }
         }
     });

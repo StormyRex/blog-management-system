@@ -72,14 +72,14 @@
     if ($isEmail) {
 
         $user = fetchOne(
-            "SELECT id, name, email, role, password, status FROM users WHERE email = ? LIMIT 1",
+            "SELECT id, name, email, role, password, status, avatar FROM users WHERE email = ? LIMIT 1",
             [$identity]
         );
 
     } else {
 
         $user = fetchOne(
-            "SELECT id, name, email, role, password, status FROM users WHERE username = ? LIMIT 1",
+            "SELECT id, name, email, role, password, status, avatar FROM users WHERE username = ? LIMIT 1",
             [$identity]
         );
 
@@ -121,7 +121,8 @@
         'id' => $user['id'],
         'name' => $user['name'],
         'email' => $user['email'],
-        'role' => $user['role']
+        'role' => $user['role'],
+        'avatar' => $user['avatar'] ?? null
     ];
 
     /*

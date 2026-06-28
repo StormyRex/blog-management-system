@@ -270,27 +270,82 @@ $(document).ready(function () {
                 window.BlogSphere.openCommentModal(clickedBlogId, title);
             }
         }
+if (action === "share") {
 
-        if (action === "share") {
-            const shareUrl = $btn.data("share-url");
-            const sc = parseInt($btn.data("share-count"), 10) || 0;
+    const shareUrl = $btn.data("share-url");
 
-            $btn.find(".share-count").text(sc + 1);
-            $btn.data("share-count", sc + 1);
+    const updateShareCount = function () {
 
-            $.post(baseUrl + "/api/blogs/share", { blogId: clickedBlogId });
+        $.post(baseUrl + "/api/blogs/share", {
+            blogId: clickedBlogId
+        })
+        .then(function (response) {
 
-            if (navigator.share) {
-                navigator.share({ title: title, url: shareUrl }).catch(function () {});
-            } else {
-                navigator.clipboard.writeText(shareUrl).then(function () {
-                    const $label = $btn.find(".action-label");
-                    const orig = $label.text();
-                    $label.text("Copied!");
-                    setTimeout(function () { $label.text(orig); }, 1800);
-                });
+            console.log("Share Response:", response);
+
+            if (response && response.success && response.data) {
+
+                const sharesCount = parseInt(response.data.sharesCount, 10) || 0;
+
+                $btn.find(".share-count").text(sharesCount);
+
+                $btn.data("share-count", sharesCount);
+
+                console.log("Updated share count:", sharesCount);
             }
-        }
+
+        })
+        .catch(function (err) {
+
+            console.error("Failed to update share count", err);
+
+        });
+    };
+
+    if (navigator.share) {
+
+        navigator.share({
+            title: title,
+            url: shareUrl
+        })
+        .then(function () {
+
+            // Share flow completed successfully
+            updateShareCount();
+
+        })
+        .catch(function (err) {
+
+            // User cancelled or share failed
+            console.log("Share cancelled", err);
+
+        });
+
+    } else {
+
+        navigator.clipboard.writeText(shareUrl)
+            .then(function () {
+
+                const $label = $btn.find(".action-label");
+                const originalText = $label.text();
+
+                $label.text("Copied!");
+
+                setTimeout(function () {
+                    $label.text(originalText);
+                }, 1800);
+
+                updateShareCount();
+
+            })
+            .catch(function (err) {
+
+                console.error("Copy failed", err);
+
+            });
+
+    }
+}
     });
 
     // Comment count callback (from Comment.php modal)
